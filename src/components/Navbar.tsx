@@ -24,21 +24,38 @@ export default function Navbar({ user }: NavbarProps) {
   const [pendingCount, setPendingCount] = useState(0);
   const [logoutModal, setLogoutModal] = useState(false);
 
-  // Fetch pending counts for admin/nurse
+  // Fetch notification counts based on user role
   useEffect(() => {
-    if (!user || !isAdminOrNurse) return;
+    if (!user) return;
 
-    async function fetchPending() {
-      const [appts, certs] = await Promise.all([
-        supabase.from("appointments").select("id", { count: "exact", head: true }).eq("status", "Pending"),
-        supabase.from("certificates").select("id", { count: "exact", head: true }).eq("status", "Pending"),
-      ]);
-      setPendingCount((appts.count || 0) + (certs.count || 0));
+    async function fetchNotifications() {
+      if (isAdminOrNurse) {
+        // Admin/Nurse: count pending items needing approval
+        const [appts, certs] = await Promise.all([
+          supabase.from("appointments").select("id", { count: "exact", head: true }).eq("status", "Pending"),
+          supabase.from("certificates").select("id", { count: "exact", head: true }).eq("status", "Pending"),
+        ]);
+        setPendingCount((appts.count || 0) + (certs.count || 0));
+      } else if (user) {
+        // Student: count their items with status updates (Approved, Rejected, Completed)
+        const { data: userData } = await supabase.from("users").select("id").eq("auth_id", user.id).single();
+        if (userData) {
+          const [appts, certs] = await Promise.all([
+            supabase.from("appointments").select("id", { count: "exact", head: true })
+              .eq("user_id", userData.id)
+              .in("status", ["Approved", "Rejected", "Completed"]),
+            supabase.from("certificates").select("id", { count: "exact", head: true })
+              .eq("user_id", userData.id)
+              .in("status", ["Approved", "Rejected", "Completed"]),
+          ]);
+          setPendingCount((appts.count || 0) + (certs.count || 0));
+        }
+      }
     }
 
-    fetchPending();
+    fetchNotifications();
     // Refresh every 30 seconds
-    const interval = setInterval(fetchPending, 30000);
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [user, isAdminOrNurse, supabase]);
 
@@ -93,58 +110,77 @@ export default function Navbar({ user }: NavbarProps) {
           {user ? (
             <>
               {/* Notification Bell */}
-              {isAdminOrNurse && (
-                <div className="relative">
-                  <button
-                    onClick={() => setNotifOpen(!notifOpen)}
-                    className="relative bg-transparent border-none cursor-pointer p-2 rounded-lg hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition"
-                  >
-                    <BellIcon size={20} />
-                    {pendingCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {pendingCount > 99 ? "99+" : pendingCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Notification Dropdown */}
-                  {notifOpen && (
-                    <>
-                      <div className="fixed inset-0 z-[998]" onClick={() => setNotifOpen(false)} />
-                      <div className="absolute right-0 top-[calc(100% + 8px)] w-[320px] bg-white rounded-xl border border-gray-100 shadow-lg z-[999] overflow-hidden">
-                        <div className="p-4 border-b border-gray-100">
-                          <h3 className="text-[15px] font-semibold text-[#1a1a2e] m-0">Notifications</h3>
-                          <p className="text-[12px] text-gray-400 mt-0.5">Pending items requiring attention</p>
-                        </div>
-                        <div className="max-h-[300px] overflow-y-auto">
-                          {pendingCount === 0 ? (
-                            <div className="p-6 text-center text-gray-400 text-[14px]">
-                              No pending items
-                            </div>
-                          ) : (
-                            <>
-                              <PendingNotifItem
-                                supabase={supabase}
-                                table="appointments"
-                                label="Pending Appointments"
-                                href="/pending"
-                                onClick={() => setNotifOpen(false)}
-                              />
-                              <PendingNotifItem
-                                supabase={supabase}
-                                table="certificates"
-                                label="Pending Certificates"
-                                href="/pending"
-                                onClick={() => setNotifOpen(false)}
-                              />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </>
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative bg-transparent border-none cursor-pointer p-2 rounded-lg hover:bg-gray-50 text-gray-500 hover:text-gray-700 transition"
+                >
+                  <BellIcon size={20} />
+                  {pendingCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {pendingCount > 99 ? "99+" : pendingCount}
+                    </span>
                   )}
-                </div>
-              )}
+                </button>
+
+                {/* Notification Dropdown */}
+                {notifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[998]" onClick={() => setNotifOpen(false)} />
+                    <div className="absolute right-0 top-[calc(100% + 8px)] w-[320px] bg-white rounded-xl border border-gray-100 shadow-lg z-[999] overflow-hidden">
+                      <div className="p-4 border-b border-gray-100">
+                        <h3 className="text-[15px] font-semibold text-[#1a1a2e] m-0">Notifications</h3>
+                        <p className="text-[12px] text-gray-400 mt-0.5">
+                          {isAdminOrNurse ? "Pending items requiring attention" : "Updates on your requests"}
+                        </p>
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {pendingCount === 0 ? (
+                          <div className="p-6 text-center text-gray-400 text-[14px]">
+                            {isAdminOrNurse ? "No pending items" : "No new updates"}
+                          </div>
+                        ) : isAdminOrNurse ? (
+                          <>
+                            <PendingNotifItem
+                              supabase={supabase}
+                              table="appointments"
+                              label="Pending Appointments"
+                              href="/pending"
+                              onClick={() => setNotifOpen(false)}
+                            />
+                            <PendingNotifItem
+                              supabase={supabase}
+                              table="certificates"
+                              label="Pending Certificates"
+                              href="/pending"
+                              onClick={() => setNotifOpen(false)}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <PendingNotifItem
+                              supabase={supabase}
+                              table="appointments"
+                              label="Appointment Updates"
+                              href="/appointments"
+                              onClick={() => setNotifOpen(false)}
+                              statusFilter={["Approved", "Rejected", "Completed"]}
+                            />
+                            <PendingNotifItem
+                              supabase={supabase}
+                              table="certificates"
+                              label="Certificate Updates"
+                              href="/certificates"
+                              onClick={() => setNotifOpen(false)}
+                              statusFilter={["Approved", "Rejected", "Completed"]}
+                            />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <Link href="/profile" className="nav-link text-[14px]">
                 Profile
@@ -276,19 +312,25 @@ export default function Navbar({ user }: NavbarProps) {
 }
 
 // Sub-component for each notification item
-function PendingNotifItem({ supabase, table, label, href, onClick }: {
+function PendingNotifItem({ supabase, table, label, href, onClick, statusFilter }: {
   supabase: any;
   table: string;
   label: string;
   href: string;
   onClick: () => void;
+  statusFilter?: string[];
 }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    supabase.from(table).select("id", { count: "exact", head: true }).eq("status", "Pending")
-      .then(({ count }: { count: number | null }) => setCount(count || 0));
-  }, [supabase, table]);
+    let query = supabase.from(table).select("id", { count: "exact", head: true });
+    if (statusFilter) {
+      query = query.in("status", statusFilter);
+    } else {
+      query = query.eq("status", "Pending");
+    }
+    query.then(({ count }: { count: number | null }) => setCount(count || 0));
+  }, [supabase, table, statusFilter]);
 
   if (count === 0) return null;
 
