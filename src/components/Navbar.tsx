@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { HospitalIcon, MenuIcon, XIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -26,22 +27,21 @@ export default function Navbar({ user }: NavbarProps) {
   };
 
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-[1000] bg-white h-[80px] flex items-center"
-      style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
-    >
+    <header className="fixed top-0 left-0 right-0 z-[1000] bg-white h-[72px] flex items-center border-b border-gray-100">
       <div className="w-[90%] max-w-[1200px] mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <span className="text-[34px] text-primary" style={{ lineHeight: 1 }}>🏥</span>
-          <h2 className="text-[26px] font-bold text-[#222] m-0">
-            MEDI<span className="text-primary">SCHED</span> CERT
+          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+            <HospitalIcon className="text-white" size={20} />
+          </div>
+          <h2 className="text-[20px] font-bold text-[#1a1a2e] m-0 tracking-tight">
+            MEDI<span className="text-primary">SCHED</span>
           </h2>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:block">
-          <ul className="flex list-none gap-[35px] items-center m-0 p-0">
+          <ul className="flex list-none gap-8 items-center m-0 p-0">
             <li><Link href="/" className="nav-link">Home</Link></li>
             {user ? (
               <>
@@ -52,7 +52,7 @@ export default function Navbar({ user }: NavbarProps) {
                 {isAdminOrNurse && (
                   <>
                     <li><Link href="/pending" className="nav-link">Pending</Link></li>
-                    <li><Link href="/admin" className="nav-link">Admin Panel</Link></li>
+                    <li><Link href="/admin" className="nav-link">Admin</Link></li>
                   </>
                 )}
               </>
@@ -65,33 +65,26 @@ export default function Navbar({ user }: NavbarProps) {
           </ul>
         </nav>
 
-        {/* Auth Buttons / User Info */}
-        <div className="hidden lg:flex items-center gap-4">
+        {/* Auth Buttons */}
+        <div className="hidden lg:flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/profile" className="nav-link">Profile</Link>
-              <span className="text-[14px] text-[#555] font-medium">
+              <Link href="/profile" className="nav-link text-[14px]">
                 {user.first_name} {user.last_name}
-              </span>
+              </Link>
               <button
                 onClick={handleLogout}
-                className="bg-white text-primary border-2 border-primary rounded-full px-7 py-3 font-semibold text-[15px] hover:bg-primary-hover hover:text-white hover:-translate-y-0.5 cursor-pointer"
+                className="text-[14px] text-gray-500 hover:text-red-500 font-medium bg-transparent border-none cursor-pointer px-3 py-1.5 rounded-lg hover:bg-red-50"
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="bg-white text-primary border-2 border-primary rounded-full px-7 py-3 font-semibold text-[15px] no-underline hover:bg-primary-hover hover:text-white hover:-translate-y-0.5"
-              >
+              <Link href="/login" className="text-[14px] text-gray-600 hover:text-primary font-medium no-underline px-4 py-2 rounded-lg hover:bg-gray-50">
                 Login
               </Link>
-              <Link
-                href="/signup"
-                className="bg-primary text-white border-2 border-primary rounded-full px-8 py-3.5 font-semibold text-[15px] no-underline hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-lg"
-              >
+              <Link href="/signup" className="text-[14px] bg-primary text-white font-medium no-underline px-5 py-2.5 rounded-lg hover:bg-primary-hover">
                 Get Started
               </Link>
             </>
@@ -100,17 +93,17 @@ export default function Navbar({ user }: NavbarProps) {
 
         {/* Mobile Menu Button */}
         <button
-          className="lg:hidden text-[28px] text-primary bg-transparent border-none cursor-pointer"
+          className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-1"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="absolute top-[80px] left-0 right-0 bg-white shadow-lg lg:hidden z-[999]">
-          <nav className="flex flex-col p-5 gap-2">
+        <div className="absolute top-[72px] left-0 right-0 bg-white border-b border-gray-100 lg:hidden z-[999]">
+          <nav className="flex flex-col p-4 gap-1">
             <Link href="/" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Home</Link>
             {user ? (
               <>
@@ -122,12 +115,12 @@ export default function Navbar({ user }: NavbarProps) {
                 {isAdminOrNurse && (
                   <>
                     <Link href="/pending" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Pending</Link>
-                    <Link href="/admin" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Admin Panel</Link>
+                    <Link href="/admin" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Admin</Link>
                   </>
                 )}
                 <button
                   onClick={() => { handleLogout(); setMobileOpen(false); }}
-                  className="mt-2 py-3 bg-primary text-white rounded-full font-semibold border-none cursor-pointer"
+                  className="mt-2 py-2.5 bg-primary text-white rounded-lg font-medium border-none cursor-pointer text-[14px]"
                 >
                   Logout
                 </button>
@@ -145,26 +138,25 @@ export default function Navbar({ user }: NavbarProps) {
       <style jsx>{`
         .nav-link {
           text-decoration: none;
-          color: #333;
+          color: #6b7280;
           font-weight: 500;
-          font-size: 16px;
-          transition: 0.3s;
+          font-size: 14px;
+          transition: 0.2s;
         }
         .nav-link:hover {
           color: #2e8b57;
-          text-decoration: underline;
         }
         .mobile-nav-link {
           text-decoration: none;
-          color: #333;
+          color: #374151;
           font-weight: 500;
-          font-size: 16px;
-          padding: 12px 15px;
-          border-radius: 10px;
-          transition: 0.3s;
+          font-size: 14px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          transition: 0.2s;
         }
         .mobile-nav-link:hover {
-          background: #f5f8fb;
+          background: #f3f4f6;
           color: #2e8b57;
         }
       `}</style>

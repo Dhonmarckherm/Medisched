@@ -1,115 +1,87 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, HospitalIcon } from "@/components/Icons";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
       <Navbar user={null} />
 
-      {/* Hero Section */}
-      <section
-        className="pt-[130px] min-h-screen flex items-center"
-        style={{ background: "linear-gradient(135deg, #eef7ff, #ffffff)" }}
-      >
-        <div className="w-[90%] max-w-[1200px] mx-auto flex flex-col lg:flex-row justify-between items-center gap-[60px]">
-          <div className="fade-up flex-1">
-            <small className="text-primary text-[18px] font-semibold">
-              Welcome to MEDISCHED CERT
-            </small>
-            <h1 className="text-[42px] lg:text-[62px] font-extrabold text-[#222] my-4 leading-tight tracking-wide">
+      {/* Hero */}
+      <section className="pt-[130px] min-h-screen flex items-center bg-white">
+        <div className="w-[90%] max-w-[1200px] mx-auto flex flex-col lg:flex-row justify-between items-center gap-16">
+          <div className="flex-1">
+            <div className="inline-flex items-center gap-2 bg-primary/5 text-primary px-4 py-2 rounded-full text-[13px] font-medium mb-6">
+              <HospitalIcon size={16} />
+              ISPSC Medical Clinic Portal
+            </div>
+            <h1 className="text-[40px] lg:text-[56px] font-bold text-[#1a1a2e] leading-[1.15] mb-6">
               Medical Scheduling &<br />Certification System
             </h1>
-            <div className="w-[90px] h-[5px] bg-primary rounded-full mb-5" />
-            <h3 className="text-[30px] text-primary mb-5">
-              ISPSC Clinic Portal
-            </h3>
-            <p className="text-[18px] leading-[32px] text-[#555] max-w-[700px]">
+            <p className="text-[17px] leading-[28px] text-gray-500 max-w-[560px] mb-8">
               Your one-stop system for clinic appointment scheduling and
               certificate requests. Manage appointments, request health
               certificates, and stay organized — all in one place.
             </p>
-            <div className="mt-[35px] flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Link
-                href="/login"
-                className="bg-white text-primary border-2 border-primary rounded-full px-7 py-3 font-semibold text-[16px] no-underline hover:bg-primary-hover hover:text-white hover:-translate-y-0.5"
-              >
+            <div className="flex flex-wrap gap-3">
+              <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3 border border-gray-200 text-gray-700 rounded-lg font-medium text-[15px] no-underline hover:border-primary hover:text-primary">
                 Login
               </Link>
-              <Link
-                href="/signup"
-                className="bg-primary text-white border-2 border-primary rounded-full px-8 py-3.5 font-semibold text-[16px] no-underline hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                Get Started
+              <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-medium text-[15px] no-underline hover:bg-primary-hover">
+                Get Started <ArrowRightIcon size={16} />
               </Link>
             </div>
           </div>
-          <div className="flex-1 flex justify-center fade-in">
-            <div className="text-center">
-              <div className="text-[120px] leading-none">🏥</div>
-              <p className="text-[#555] text-[16px] mt-4">
-                Ilocos Sur Polytechnic State College
-              </p>
+          <div className="flex-1 flex justify-center">
+            <div className="w-[320px] h-[320px] bg-primary/5 rounded-2xl flex items-center justify-center">
+              <HospitalIcon className="text-primary" size={120} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Service Cards */}
-      <section className="py-[80px] bg-white">
-        <div className="w-[90%] max-w-[1200px] mx-auto text-center">
-          <h2 className="text-[42px] font-bold text-[#222] mb-4">
-            Our Services
-          </h2>
-          <p className="text-[18px] text-[#555] mb-[50px] max-w-[600px] mx-auto">
-            Streamlined healthcare management for students
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[30px]">
-            <div className="service-card bg-white p-[40px_30px] rounded-[20px] text-center shadow-lg hover:-translate-y-2.5 hover:shadow-xl">
-              <div className="text-[60px] text-primary mb-6">📅</div>
-              <h3 className="text-[22px] font-semibold mb-4">
-                Easy Scheduling
-              </h3>
-              <p className="text-[16px] text-[#555] mb-5">
-                Request clinic appointments with just a few clicks. Choose your
-                preferred date and purpose.
+      {/* Services */}
+      <section className="py-20 bg-[#f8faf9]">
+        <div className="w-[90%] max-w-[1200px] mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-[32px] font-bold text-[#1a1a2e] mb-3">Our Services</h2>
+            <p className="text-[16px] text-gray-500">Streamlined healthcare management for students</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-8 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-5">
+                <CalendarIcon size={24} />
+              </div>
+              <h3 className="text-[18px] font-semibold text-[#1a1a2e] mb-3">Easy Scheduling</h3>
+              <p className="text-[15px] text-gray-500 mb-5 leading-relaxed">
+                Request clinic appointments with just a few clicks. Choose your preferred date and purpose.
               </p>
-              <Link
-                href="/appointments/new"
-                className="inline-block py-3 px-7 rounded-full bg-primary text-white no-underline font-semibold hover:bg-primary-hover"
-              >
-                Book Now
+              <Link href="/appointments/new" className="inline-flex items-center gap-1.5 text-primary text-[14px] font-medium no-underline hover:gap-3 transition-all">
+                Book Now <ArrowRightIcon size={14} />
               </Link>
             </div>
-            <div className="service-card bg-white p-[40px_30px] rounded-[20px] text-center shadow-lg hover:-translate-y-2.5 hover:shadow-xl">
-              <div className="text-[60px] text-primary mb-6">📜</div>
-              <h3 className="text-[22px] font-semibold mb-4">
-                Certificate Requests
-              </h3>
-              <p className="text-[16px] text-[#555] mb-5">
-                Submit and track health certificate requests. Get notified when
-                your certificate is ready.
+            <div className="bg-white p-8 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-5">
+                <CertificateIcon size={24} />
+              </div>
+              <h3 className="text-[18px] font-semibold text-[#1a1a2e] mb-3">Certificate Requests</h3>
+              <p className="text-[15px] text-gray-500 mb-5 leading-relaxed">
+                Submit and track health certificate requests. Get notified when your certificate is ready.
               </p>
-              <Link
-                href="/certificates/new"
-                className="inline-block py-3 px-7 rounded-full bg-primary text-white no-underline font-semibold hover:bg-primary-hover"
-              >
-                Request Now
+              <Link href="/certificates/new" className="inline-flex items-center gap-1.5 text-primary text-[14px] font-medium no-underline hover:gap-3 transition-all">
+                Request Now <ArrowRightIcon size={14} />
               </Link>
             </div>
-            <div className="service-card bg-white p-[40px_30px] rounded-[20px] text-center shadow-lg hover:-translate-y-2.5 hover:shadow-xl">
-              <div className="text-[60px] text-primary mb-6">✅</div>
-              <h3 className="text-[22px] font-semibold mb-4">
-                Status Tracking
-              </h3>
-              <p className="text-[16px] text-[#555] mb-5">
-                Track the status of your appointments and certificates in
-                real-time with instant updates.
+            <div className="bg-white p-8 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-5">
+                <CheckCircleIcon size={24} />
+              </div>
+              <h3 className="text-[18px] font-semibold text-[#1a1a2e] mb-3">Status Tracking</h3>
+              <p className="text-[15px] text-gray-500 mb-5 leading-relaxed">
+                Track the status of your appointments and certificates in real-time with instant updates.
               </p>
-              <Link
-                href="/login"
-                className="inline-block py-3 px-7 rounded-full bg-primary text-white no-underline font-semibold hover:bg-primary-hover"
-              >
-                Track Now
+              <Link href="/login" className="inline-flex items-center gap-1.5 text-primary text-[14px] font-medium no-underline hover:gap-3 transition-all">
+                Track Now <ArrowRightIcon size={14} />
               </Link>
             </div>
           </div>
@@ -117,17 +89,16 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t-[3px] border-primary text-center py-5 text-[14px] bg-[#f9f9f9] text-[#333]">
-        <p className="m-0 leading-[1.6]">
-          © 2026 MEDISCHED CERT — Ilocos Sur Polytechnic State College
-        </p>
-        <p className="text-[13px] text-[#555] mt-1">
-          Medical Scheduling and Certification Request System
-        </p>
-        <div className="mt-2.5">
-          <Link href="/login" className="text-primary no-underline mx-2.5 font-medium hover:underline">Login</Link>
-          <Link href="/signup" className="text-primary no-underline mx-2.5 font-medium hover:underline">Sign Up</Link>
-          <Link href="/appointments" className="text-primary no-underline mx-2.5 font-medium hover:underline">Appointments</Link>
+      <footer className="border-t border-gray-100 py-8 bg-white">
+        <div className="w-[90%] max-w-[1200px] mx-auto text-center">
+          <p className="text-[14px] text-gray-400 m-0">
+            &copy; 2026 MEDISCHED CERT — Ilocos Sur Polytechnic State College
+          </p>
+          <div className="mt-3 flex justify-center gap-6">
+            <Link href="/login" className="text-gray-400 no-underline text-[13px] hover:text-primary">Login</Link>
+            <Link href="/signup" className="text-gray-400 no-underline text-[13px] hover:text-primary">Sign Up</Link>
+            <Link href="/appointments" className="text-gray-400 no-underline text-[13px] hover:text-primary">Appointments</Link>
+          </div>
         </div>
       </footer>
     </div>
