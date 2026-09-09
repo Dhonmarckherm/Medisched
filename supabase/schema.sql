@@ -84,6 +84,28 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active_status ON public.users(active_status);
 
 -- ============================================
+-- FUNCTIONS (must be created BEFORE policies that reference them)
+-- ============================================
+
+-- Helper function to check user role (SECURITY DEFINER bypasses RLS to avoid infinite recursion)
+CREATE OR REPLACE FUNCTION public.is_admin_or_nurse()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper to get user id from auth uid
+CREATE OR REPLACE FUNCTION public.current_user_id()
+RETURNS UUID AS $$
+BEGIN
+    RETURN (SELECT id FROM public.users WHERE auth_id = auth.uid());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -91,7 +113,7 @@ ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accommodations ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies before recreating (avoids "policy already exists" errors)
+-- Drop existing policies before recreating
 DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
 DROP POLICY IF EXISTS "Admins and nurses can view all users" ON public.users;
 DROP POLICY IF EXISTS "Anyone can insert users" ON public.users;
@@ -162,26 +184,8 @@ CREATE POLICY "Admins and nurses can update accommodations" ON public.accommodat
     FOR UPDATE USING (public.is_admin_or_nurse());
 
 -- ============================================
--- FUNCTIONS & TRIGGERS
+-- TRIGGERS
 -- ============================================
-
--- Helper function to check user role (SECURITY DEFINER bypasses RLS to avoid infinite recursion)
-CREATE OR REPLACE FUNCTION public.is_admin_or_nurse()
-RETURNS BOOLEAN AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Helper to get user id from auth uid
-CREATE OR REPLACE FUNCTION public.current_user_id()
-RETURNS UUID AS $$
-BEGIN
-    RETURN (SELECT id FROM public.users WHERE auth_id = auth.uid());
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -191,7 +195,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Drop triggers before recreating to avoid duplicates
 DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
 DROP TRIGGER IF EXISTS update_appointments_updated_at ON public.appointments;
 DROP TRIGGER IF EXISTS update_certificates_updated_at ON public.certificates;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -22,10 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use anon client for auth (signUp), service client for DB operations (bypasses RLS)
     const supabase = await createClient();
+    const supabaseAdmin = createServiceClient();
 
     // Check if email or ID number already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from("users")
       .select("id")
       .or(`email.eq.${email},id_number.eq.${id_number}`)
@@ -54,8 +57,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user in our database
-    const { data: dbUser, error: dbError } = await supabase
+    // Create user in our database (using service client to bypass RLS)
+    const { data: dbUser, error: dbError } = await supabaseAdmin
       .from("users")
       .insert({
         auth_id: authData.user?.id || null,
