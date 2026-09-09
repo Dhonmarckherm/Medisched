@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -206,49 +206,158 @@ export default function Navbar({ user }: NavbarProps) {
 
         {/* Mobile Menu Button */}
         <button
-          className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-1"
+          className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition"
           onClick={() => setMobileOpen(!mobileOpen)}
+          style={{ minWidth: 44, minHeight: 44 }}
         >
-          {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
+          {mobileOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {mobileOpen && (
-        <div className="absolute top-[72px] left-0 right-0 bg-white border-b border-gray-100 lg:hidden z-[999]">
-          <nav className="flex flex-col p-4 gap-1">
-            <Link href="/" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Home</Link>
-            {user ? (
-              <>
-                <Link href="/dashboard" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Dashboard</Link>
-                <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Appointments</Link>
-                <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Certificates</Link>
-                <Link href="/schedule" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Schedule</Link>
-                <Link href="/profile" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Profile</Link>
-                {isAdminOrNurse && (
-                  <>
-                    <Link href="/pending" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                      Pending {pendingCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{pendingCount}</span>}
-                    </Link>
-                    <Link href="/admin" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Admin</Link>
-                  </>
-                )}
-                <button
-                  onClick={() => { setLogoutModal(true); setMobileOpen(false); }}
-                  className="mt-2 py-2.5 bg-primary text-white rounded-lg font-medium border-none cursor-pointer text-[14px]"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Appointments</Link>
-                <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Certificates</Link>
-                <Link href="/login" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Login</Link>
-                <Link href="/signup" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Get Started</Link>
-              </>
+        <div className="fixed inset-0 z-[999] lg:hidden">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute top-[72px] left-0 right-0 bg-white rounded-b-2xl shadow-2xl border-b border-gray-100 overflow-hidden animate-slide-down">
+            {/* User info header (if logged in) */}
+            {user && (
+              <div className="px-5 py-4 bg-gradient-to-r from-primary/5 to-emerald-50/50 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-white font-bold text-[14px]">
+                    {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-semibold text-[#1a1a2e]">{user.first_name} {user.last_name}</div>
+                    <div className="text-[12px] text-gray-400 capitalize">{user.role}</div>
+                  </div>
+                </div>
+              </div>
             )}
-          </nav>
+
+            <nav className="flex flex-col p-3 gap-0.5">
+              <Link href="/" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                <span className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                    <HospitalIcon size={16} />
+                  </span>
+                  Home
+                </span>
+              </Link>
+
+              {user ? (
+                <>
+                  <Link href="/dashboard" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+                        <HospitalIcon size={16} />
+                      </span>
+                      Dashboard
+                    </span>
+                  </Link>
+                  <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                        <CalendarIcon size={16} />
+                      </span>
+                      Appointments
+                    </span>
+                  </Link>
+                  <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500">
+                        <CertificateIcon size={16} />
+                      </span>
+                      Certificates
+                    </span>
+                  </Link>
+                  <Link href="/schedule" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+                        <ClockIcon size={16} />
+                      </span>
+                      Schedule
+                    </span>
+                  </Link>
+                  <Link href="/profile" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                        <UserIcon size={16} />
+                      </span>
+                      Profile
+                    </span>
+                  </Link>
+
+                  {isAdminOrNurse && (
+                    <>
+                      <div className="h-px bg-gray-100 my-2 mx-3"></div>
+                      <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
+                      <Link href="/pending" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                        <span className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 relative">
+                            <BellIcon size={16} />
+                            {pendingCount > 0 && (
+                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">{pendingCount}</span>
+                            )}
+                          </span>
+                          Pending
+                          {pendingCount > 0 && (
+                            <span className="bg-red-50 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-semibold">{pendingCount}</span>
+                          )}
+                        </span>
+                      </Link>
+                      <Link href="/admin" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                        <span className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <ShieldIcon size={16} />
+                          </span>
+                          Admin Dashboard
+                        </span>
+                      </Link>
+                    </>
+                  )}
+
+                  <div className="mt-3 px-1">
+                    <button
+                      onClick={() => { setLogoutModal(true); setMobileOpen(false); }}
+                      className="w-full py-3 bg-red-50 text-red-500 rounded-xl font-semibold border-none cursor-pointer text-[14px] hover:bg-red-100 transition flex items-center justify-center gap-2"
+                    >
+                      <XIcon size={16} /> Logout
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                        <CalendarIcon size={16} />
+                      </span>
+                      Appointments
+                    </span>
+                  </Link>
+                  <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                    <span className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500">
+                        <CertificateIcon size={16} />
+                      </span>
+                      Certificates
+                    </span>
+                  </Link>
+                  <div className="h-px bg-gray-100 my-2 mx-3"></div>
+                  <div className="flex gap-2 mt-2 px-1">
+                    <Link href="/login" onClick={() => setMobileOpen(false)}
+                      className="flex-1 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-[14px] no-underline text-center hover:border-primary hover:text-primary transition">
+                      Login
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileOpen(false)}
+                      className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-[14px] no-underline text-center hover:bg-primary-hover transition">
+                      Sign Up
+                    </Link>
+                  </div>
+                </>
+              )}
+            </nav>
+          </div>
         </div>
       )}
 
@@ -299,12 +408,16 @@ export default function Navbar({ user }: NavbarProps) {
           font-weight: 500;
           font-size: 14px;
           padding: 10px 12px;
-          border-radius: 8px;
+          border-radius: 10px;
           transition: 0.2s;
+          display: block;
         }
         .mobile-nav-link:hover {
-          background: #f3f4f6;
+          background: #f0f7f2;
           color: #2e8b57;
+        }
+        .mobile-nav-link:active {
+          background: #e0efe4;
         }
       `}</style>
     </header>
