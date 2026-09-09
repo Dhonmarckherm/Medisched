@@ -2,7 +2,32 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Cache the service client to avoid recreating on every request
+let cachedAdminClient: ReturnType<typeof createClient> | null = null;
+
+function getAdminClient() {
+  if (!cachedAdminClient) {
+    cachedAdminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+  }
+  return cachedAdminClient;
+}
+
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Early exit for static assets and public routes
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)
+  ) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -26,23 +51,19 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-
-  // Public routes
+  // Public routes - skip auth check
   const publicRoutes = ["/", "/login", "/signup", "/reset-password"];
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith("/api/auth")
-  );
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth");
 
   if (isPublicRoute) {
     return supabaseResponse;
   }
 
-  // Redirect unauthenticated users to login
+  // Check authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -50,29 +71,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Use service client to look up user role (bypasses RLS, avoids infinite recursion)
-  let dbUser = null;
-  try {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-    const { data } = await supabaseAdmin
-      .from("users")
-      .select("role, active_status")
-      .eq("auth_id", user.id)
-      .single();
-    dbUser = data;
-  } catch {
-    // If service client fails, try anon client
-    const { data } = await supabase
-      .from("users")
-      .select("role, active_status")
-      .eq("auth_id", user.id)
-      .single();
-    dbUser = data;
-  }
+  // Use cached service client for user lookup
+  const supabaseAdmin = getAdminClient();
+  const { data: dbUser } = await supabaseAdmin
+    .from("users")
+    .select("role, active_status")
+    .eq("auth_id", user.id)
+    .single();
 
   if (!dbUser) {
     const url = request.nextUrl.clone();
@@ -88,26 +93,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Admin-only routes
-  const adminRoutes = ["/admin", "/admin/users"];
-  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+  // Route-based role checks
+  const isAdminRoute = pathname.startsWith("/admin") && !pathname.startsWith("/admin/appointments") && !pathname.startsWith("/admin/certificates");
+  const isStaffRoute = pathname.startsWith("/admin/appointments") || pathname.startsWith("/admin/certificates") || pathname.startsWith("/pending");
+
   if (isAdminRoute && dbUser.role !== "admin") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Admin/Nurse routes
-  const staffRoutes = ["/admin/appointments", "/admin/certificates", "/pending"];
-  const isStaffRoute = staffRoutes.some((route) => pathname.startsWith(route));
   if (isStaffRoute && !["admin", "nurse"].includes(dbUser.role)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect authenticated students away from admin pages
-  if (pathname === "/admin" && dbUser.role === "student") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
