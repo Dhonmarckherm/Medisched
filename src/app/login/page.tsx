@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+import { useToast } from "@/components/Toast";
 
 export default function LoginPage() {
   return (
@@ -17,20 +18,29 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { addToast } = useToast();
 
   const redirectError = searchParams.get("error");
+  const registered = searchParams.get("registered");
+
+  // Show toast for redirect errors and registration success
+  useEffect(() => {
+    if (redirectError) {
+      addToast("error", redirectError);
+    }
+    if (registered) {
+      addToast("success", "Account created! Please sign in.");
+    }
+  }, [redirectError, registered, addToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
-      // Use server-side login API which properly sets session cookies
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,19 +50,20 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        addToast("error", data.error || "Login failed");
         setLoading(false);
         return;
       }
 
-      // Redirect based on role (push navigates to new page where middleware reads the session cookie)
+      addToast("success", "Login successful! Redirecting...");
+
       if (data.user.role === "admin" || data.user.role === "nurse") {
-        router.push("/admin");
+        setTimeout(() => router.push("/admin"), 800);
       } else {
-        router.push("/dashboard");
+        setTimeout(() => router.push("/dashboard"), 800);
       }
     } catch {
-      setError("An unexpected error occurred");
+      addToast("error", "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -81,12 +92,6 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="w-full max-w-[400px]">
           <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Welcome back</h2>
           <p className="text-gray-400 text-[14px] mb-8">Sign in to your account to continue</p>
-
-          {(error || redirectError) && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">
-              {error || redirectError}
-            </div>
-          )}
 
           <div className="space-y-4">
             <div>
