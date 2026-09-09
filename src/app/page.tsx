@@ -5,6 +5,10 @@ import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, Hospita
 
 export default async function HomePage() {
   let dbUser = null;
+  let totalAppointments = 0;
+  let totalCertificates = 0;
+  let totalStudents = 0;
+
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -16,8 +20,18 @@ export default async function HomePage() {
         .single();
       dbUser = data;
     }
+
+    // Fetch real stats
+    const [appts, certs, students] = await Promise.all([
+      supabase.from("appointments").select("id", { count: "exact", head: true }),
+      supabase.from("certificates").select("id", { count: "exact", head: true }),
+      supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "student"),
+    ]);
+    totalAppointments = appts.count || 0;
+    totalCertificates = certs.count || 0;
+    totalStudents = students.count || 0;
   } catch {
-    // Not logged in
+    // Not logged in or error fetching stats
   }
 
   return (
@@ -58,7 +72,7 @@ export default async function HomePage() {
             {/* Trust indicators */}
             <div className="flex items-center gap-6 mt-10 pt-8 border-t border-gray-100">
               <div>
-                <div className="text-[24px] font-bold text-[#1a1a2e]">500+</div>
+                <div className="text-[24px] font-bold text-[#1a1a2e]">{totalStudents > 0 ? `${totalStudents}+` : "—"}</div>
                 <div className="text-[12px] text-gray-400 font-medium">Students Served</div>
               </div>
               <div className="w-px h-10 bg-gray-200"></div>
@@ -93,36 +107,15 @@ export default async function HomePage() {
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><CalendarIcon size={14} /></div>
                     </div>
-                    <div className="text-[22px] font-bold text-[#1a1a2e]">24</div>
+                    <div className="text-[22px] font-bold text-[#1a1a2e]">{totalAppointments}</div>
                     <div className="text-[10px] text-gray-400 font-medium mt-0.5">Appointments</div>
                   </div>
                   <div className="flex-1 bg-gradient-to-br from-purple-50 to-purple-50/50 rounded-xl p-3.5 border border-purple-100/50">
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600"><CertificateIcon size={14} /></div>
                     </div>
-                    <div className="text-[22px] font-bold text-[#1a1a2e]">18</div>
+                    <div className="text-[22px] font-bold text-[#1a1a2e]">{totalCertificates}</div>
                     <div className="text-[10px] text-gray-400 font-medium mt-0.5">Certificates</div>
-                  </div>
-                </div>
-                {/* Activity list */}
-                <div className="bg-gray-50/80 rounded-xl p-4">
-                  <div className="text-[11px] font-semibold text-gray-400 mb-3 uppercase tracking-wider">Recent Activity</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-amber-400"></div></div>
-                      <span className="text-[12px] text-gray-600 flex-1">Appointment request submitted</span>
-                      <span className="text-[10px] text-gray-400">2m</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-emerald-400"></div></div>
-                      <span className="text-[12px] text-gray-600 flex-1">Certificate approved</span>
-                      <span className="text-[10px] text-gray-400">15m</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><div className="w-2 h-2 rounded-full bg-blue-400"></div></div>
-                      <span className="text-[12px] text-gray-600 flex-1">New patient registered</span>
-                      <span className="text-[10px] text-gray-400">1h</span>
-                    </div>
                   </div>
                 </div>
               </div>
