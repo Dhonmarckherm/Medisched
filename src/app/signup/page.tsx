@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon } from "@/components/Icons";
+import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -52,7 +52,12 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col lg:flex-row">
+    <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
+      {/* Back to Home */}
+      <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+        <ArrowLeftIcon size={14} /> Back to Home
+      </Link>
+
       {/* Left Panel */}
       <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
         <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
