@@ -268,13 +268,7 @@ export default async function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8 bg-white">
-        <div className="w-[90%] max-w-[1200px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center">
-              <HospitalIcon className="text-white" size={16} />
-            </div>
-            <span className="text-[14px] font-bold text-[#1a1a2e]">MEDISCHED CERT</span>
-          </div>
+        <div className="w-[90%] max-w-[1200px] mx-auto text-center">
           <p className="text-[13px] text-gray-400 m-0">
             &copy; 2026 MEDISCHED CERT — Ilocos Sur Polytechnic State College
           </p>
