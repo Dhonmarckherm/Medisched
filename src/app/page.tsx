@@ -76,18 +76,6 @@ export default async function HomePage() {
 
           {/* Hero Card */}
           <div className="flex-1 flex justify-center">
-            <div className="relative">
-              {/* Floating badge */}
-              <div className="absolute -top-4 -left-4 bg-white rounded-xl px-4 py-2.5 shadow-lg border border-gray-100 flex items-center gap-2 z-10">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <CheckCircleIcon size={18} className="text-emerald-500" />
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#1a1a2e]">Certificate Ready</div>
-                  <div className="text-[10px] text-gray-400">Just now</div>
-                </div>
-              </div>
-              
               <div className="w-[340px] sm:w-[380px] bg-white rounded-2xl p-6 shadow-xl border border-gray-100/80">
                 {/* Header bar */}
                 <div className="flex items-center gap-3 mb-5">
@@ -138,18 +126,6 @@ export default async function HomePage() {
                   </div>
                 </div>
               </div>
-
-              {/* Floating badge bottom-right */}
-              <div className="absolute -bottom-3 -right-3 bg-white rounded-xl px-4 py-2.5 shadow-lg border border-gray-100 flex items-center gap-2 z-10">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <CalendarIcon size={18} className="text-blue-500" />
-                </div>
-                <div>
-                  <div className="text-[12px] font-semibold text-[#1a1a2e]">New Appointment</div>
-                  <div className="text-[10px] text-gray-400">Tomorrow, 9:00 AM</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
