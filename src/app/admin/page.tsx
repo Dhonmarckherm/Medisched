@@ -38,19 +38,38 @@ export default async function AdminDashboardPage() {
     <div className="min-h-screen bg-[#f8faf9]">
       <Navbar user={dbUser} />
       <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
-        <div className="mb-8">
-          <h1 className="text-[28px] font-bold text-[#1a1a2e]">Admin Dashboard</h1>
-          <p className="text-gray-400 mt-1 text-[14px]">
-            Welcome, {dbUser.first_name} {dbUser.last_name} &middot; <span className="capitalize text-primary font-medium">{dbUser.role}</span>
-          </p>
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-primary to-emerald-600 rounded-2xl p-6 sm:p-8 mb-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
+          <div className="absolute bottom-0 left-1/2 w-[120px] h-[120px] bg-white/5 rounded-full translate-y-1/2"></div>
+          <div className="relative z-10">
+            <h1 className="text-[24px] sm:text-[28px] font-bold mb-1">
+              Admin Dashboard
+            </h1>
+            <p className="text-white/80 text-[14px] mb-4">
+              Welcome, {dbUser.first_name} {dbUser.last_name} &middot; <span className="capitalize font-medium">{dbUser.role}</span>
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/pending"
+                className="inline-flex items-center gap-2 bg-white text-primary px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-white/90 transition">
+                View Pending <ArrowRightIcon size={16} />
+              </Link>
+              {isAdmin && (
+                <Link href="/admin/users"
+                  className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-white/25 transition border border-white/20">
+                  <UsersIcon size={16} /> Manage Users
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="Total Students" value={totalStudents ?? 0} icon={<UsersIcon size={20} />} />
-          <StatCard title="Total Appointments" value={totalAppointments ?? 0} icon={<CalendarIcon size={20} />} />
-          <StatCard title="Total Certificates" value={totalCertificates ?? 0} icon={<CertificateIcon size={20} />} />
-          <StatCard title="Pending Items" value={(pendingAppointments ?? 0) + (pendingCertificates ?? 0)} icon={<ClockIcon size={20} />} />
+          <StatCard title="Total Students" value={totalStudents ?? 0} icon={<UsersIcon size={20} />} color="blue" />
+          <StatCard title="Total Appointments" value={totalAppointments ?? 0} icon={<CalendarIcon size={20} />} color="green" />
+          <StatCard title="Total Certificates" value={totalCertificates ?? 0} icon={<CertificateIcon size={20} />} color="purple" />
+          <StatCard title="Pending Items" value={(pendingAppointments ?? 0) + (pendingCertificates ?? 0)} icon={<ClockIcon size={20} />} color="amber" />
         </div>
 
         {/* Management Links */}

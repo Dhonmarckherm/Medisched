@@ -4,13 +4,23 @@ interface StatCardProps {
   title: string;
   value: number;
   icon?: ReactNode;
+  color?: "green" | "blue" | "amber" | "purple";
 }
 
-export default function StatCard({ title, value, icon }: StatCardProps) {
+const colorMap = {
+  green: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  blue: { bg: "bg-blue-50", text: "text-blue-600" },
+  amber: { bg: "bg-amber-50", text: "text-amber-600" },
+  purple: { bg: "bg-purple-50", text: "text-purple-600" },
+};
+
+export default function StatCard({ title, value, icon, color = "green" }: StatCardProps) {
+  const colors = colorMap[color];
+
   return (
     <div className="bg-white p-5 rounded-xl border border-gray-100 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+        <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center ${colors.text}`}>
           {icon}
         </div>
         <span className="text-[13px] text-gray-500 font-medium">{title}</span>
