@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { MailIcon, LockIcon, IdCardIcon, HospitalIcon } from "@/components/Icons";
 
 export default function LoginPage() {
   return (
@@ -97,89 +98,76 @@ function LoginForm() {
   };
 
   return (
-    <div className="auth-container w-full min-h-screen flex flex-wrap">
-      {/* Left Panel - Green */}
-      <div className="auth-left w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-[50px]">
-        <div className="text-[80px] mb-6">🏥</div>
-        <h1 className="text-[45px] font-bold mb-4 text-center">MEDISCHED CERT</h1>
-        <p className="text-[18px] text-center mb-10 opacity-90 max-w-[400px]">
+    <div className="w-full min-h-screen flex flex-col lg:flex-row">
+      {/* Left Panel */}
+      <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
+        <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+          <HospitalIcon className="text-white" size={32} />
+        </div>
+        <h1 className="text-[36px] font-bold mb-3 text-center">MEDISCHED CERT</h1>
+        <p className="text-[16px] text-center opacity-80 max-w-[360px]">
           Medical Scheduling and Certification Request System
         </p>
-        <div className="text-[60px]">🩺</div>
       </div>
 
-      {/* Right Panel - White */}
-      <div className="auth-right w-full lg:w-1/2 flex justify-center items-center bg-white p-5">
-        <form onSubmit={handleSubmit} className="w-full max-w-[420px] fade-in">
-          <h2 className="text-center text-[30px] font-bold text-[#222] mb-8">
-            Welcome Back
-          </h2>
+      {/* Right Panel */}
+      <div className="w-full lg:w-1/2 flex justify-center items-center bg-white p-8">
+        <form onSubmit={handleSubmit} className="w-full max-w-[400px]">
+          <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Welcome back</h2>
+          <p className="text-gray-400 text-[14px] mb-8">Sign in to your account to continue</p>
 
           {(error || redirectError) && (
-            <div className="bg-[#f8d7da] text-[#842029] p-4 rounded-[10px] mb-5 border-l-[5px] border-[#dc3545]">
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">
               {error || redirectError}
             </div>
           )}
 
-          <div className="input-group flex items-center border border-[#ddd] rounded-[10px] mb-4 px-4">
-            <span className="text-primary text-[18px] mr-2">📧</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full py-3.5 border-none outline-none text-[15px] font-[Poppins]"
-              placeholder="Email Address"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Email</label>
+              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+                <MailIcon className="text-gray-400 mr-2" size={18} />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[13px] font-medium text-gray-600 mb-1.5">ID Number</label>
+              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+                <IdCardIcon className="text-gray-400 mr-2" size={18} />
+                <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} required
+                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Password</label>
+              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+                <LockIcon className="text-gray-400 mr-2" size={18} />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Enter password" />
+              </div>
+            </div>
           </div>
 
-          <div className="input-group flex items-center border border-[#ddd] rounded-[10px] mb-4 px-4">
-            <span className="text-primary text-[18px] mr-2">🆔</span>
-            <input
-              type="text"
-              value={idNumber}
-              onChange={(e) => setIdNumber(e.target.value)}
-              required
-              className="w-full py-3.5 border-none outline-none text-[15px] font-[Poppins]"
-              placeholder="ID Number"
-            />
-          </div>
-
-          <div className="input-group flex items-center border border-[#ddd] rounded-[10px] mb-4 px-4">
-            <span className="text-primary text-[18px] mr-2">🔒</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full py-3.5 border-none outline-none text-[15px] font-[Poppins]"
-              placeholder="Password"
-            />
-          </div>
-
-          <div className="flex justify-between items-center mb-5 text-[14px]">
-            <label className="flex items-center gap-2 text-[#555]">
-              <input type="checkbox" className="accent-primary" /> Remember me
+          <div className="flex justify-between items-center mt-4 text-[13px]">
+            <label className="flex items-center gap-2 text-gray-500">
+              <input type="checkbox" className="accent-primary rounded" /> Remember me
             </label>
             <Link href="/reset-password" className="text-primary no-underline font-medium">
               Forgot password?
             </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="auth-btn w-full py-4 bg-primary text-white border-none rounded-[10px] cursor-pointer text-[16px] font-semibold hover:bg-primary-hover transition disabled:opacity-50"
-          >
-            {loading ? "Logging in..." : "Login"}
+          <button type="submit" disabled={loading}
+            className="w-full py-3 bg-primary text-white border-none rounded-lg cursor-pointer text-[14px] font-medium mt-6 hover:bg-primary-hover transition disabled:opacity-50">
+            {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <p className="mt-5 text-center text-[14px] text-[#555]">
+          <p className="mt-5 text-center text-[13px] text-gray-400">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary no-underline font-semibold">
-              Sign Up
-            </Link>
+            <Link href="/signup" className="text-primary no-underline font-medium">Sign Up</Link>
           </p>
         </form>
       </div>
