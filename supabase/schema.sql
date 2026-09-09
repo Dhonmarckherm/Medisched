@@ -94,56 +94,94 @@ ALTER TABLE public.accommodations ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies before recreating (avoids "policy already exists" errors)
 DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
 DROP POLICY IF EXISTS "Admins and nurses can view all users" ON public.users;
+DROP POLICY IF EXISTS "Anyone can insert users" ON public.users;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+DROP POLICY IF EXISTS "Admins can update any user" ON public.users;
 DROP POLICY IF EXISTS "Students can view own appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Admins and nurses can view all appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Anyone can insert appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Admins and nurses can update appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Students can view own certificates" ON public.certificates;
 DROP POLICY IF EXISTS "Admins and nurses can view all certificates" ON public.certificates;
+DROP POLICY IF EXISTS "Anyone can insert certificates" ON public.certificates;
+DROP POLICY IF EXISTS "Admins and nurses can update certificates" ON public.certificates;
 DROP POLICY IF EXISTS "Everyone can view accommodations" ON public.accommodations;
+DROP POLICY IF EXISTS "Admins and nurses can insert accommodations" ON public.accommodations;
+DROP POLICY IF EXISTS "Admins and nurses can update accommodations" ON public.accommodations;
 
 -- Users policies
 CREATE POLICY "Users can view own profile" ON public.users
     FOR SELECT USING (auth.uid() = auth_id);
 
 CREATE POLICY "Admins and nurses can view all users" ON public.users
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
-        )
-    );
+    FOR SELECT USING (public.is_admin_or_nurse());
+
+CREATE POLICY "Anyone can insert users" ON public.users
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can update own profile" ON public.users
+    FOR UPDATE USING (auth.uid() = auth_id);
+
+CREATE POLICY "Admins can update any user" ON public.users
+    FOR UPDATE USING (public.is_admin_or_nurse());
 
 -- Appointments policies
 CREATE POLICY "Students can view own appointments" ON public.appointments
-    FOR SELECT USING (
-        user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid())
-    );
+    FOR SELECT USING (user_id = public.current_user_id());
 
 CREATE POLICY "Admins and nurses can view all appointments" ON public.appointments
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
-        )
-    );
+    FOR SELECT USING (public.is_admin_or_nurse());
+
+CREATE POLICY "Anyone can insert appointments" ON public.appointments
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Admins and nurses can update appointments" ON public.appointments
+    FOR UPDATE USING (public.is_admin_or_nurse());
 
 -- Certificates policies
 CREATE POLICY "Students can view own certificates" ON public.certificates
-    FOR SELECT USING (
-        user_id = (SELECT id FROM public.users WHERE auth_id = auth.uid())
-    );
+    FOR SELECT USING (user_id = public.current_user_id());
 
 CREATE POLICY "Admins and nurses can view all certificates" ON public.certificates
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
-        )
-    );
+    FOR SELECT USING (public.is_admin_or_nurse());
+
+CREATE POLICY "Anyone can insert certificates" ON public.certificates
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Admins and nurses can update certificates" ON public.certificates
+    FOR UPDATE USING (public.is_admin_or_nurse());
 
 -- Accommodations policies
 CREATE POLICY "Everyone can view accommodations" ON public.accommodations
     FOR SELECT USING (true);
 
+CREATE POLICY "Admins and nurses can insert accommodations" ON public.accommodations
+    FOR INSERT WITH CHECK (public.is_admin_or_nurse());
+
+CREATE POLICY "Admins and nurses can update accommodations" ON public.accommodations
+    FOR UPDATE USING (public.is_admin_or_nurse());
+
 -- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
+
+-- Helper function to check user role (SECURITY DEFINER bypasses RLS to avoid infinite recursion)
+CREATE OR REPLACE FUNCTION public.is_admin_or_nurse()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM public.users WHERE auth_id = auth.uid() AND role IN ('admin', 'nurse')
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper to get user id from auth uid
+CREATE OR REPLACE FUNCTION public.current_user_id()
+RETURNS UUID AS $$
+BEGIN
+    RETURN (SELECT id FROM public.users WHERE auth_id = auth.uid());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
