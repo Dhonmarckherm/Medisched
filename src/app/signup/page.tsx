@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+import { useToast } from "@/components/Toast";
 
 const COURSES = [
   "BS Nursing",
@@ -25,29 +26,65 @@ export default function SignupPage() {
     firstName: "", lastName: "", middleName: "", email: "", idNumber: "",
     password: "", confirmPassword: "", course: "", yearLevel: "",
   });
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { addToast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        return value.trim() ? "" : "This field is required";
+      case "email":
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Invalid email format";
+      case "idNumber":
+        return value.trim() ? "" : "ID number is required";
+      case "password":
+        return value.length >= 6 ? "" : "Password must be at least 6 characters";
+      case "confirmPassword":
+        return value === formData.password ? "" : "Passwords do not match";
+      case "course":
+      case "yearLevel":
+        return value ? "" : "This field is required";
+      default:
+        return "";
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors({ ...errors, [name]: error });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    
+    // Validate all fields
+    const newErrors: Record<string, string> = {};
+    Object.entries(formData).forEach(([key, value]) => {
+      const error = validateField(key, value);
+      if (error) newErrors[key] = error;
+    });
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
+    if (Object.keys(newErrors).some(k => newErrors[k])) {
+      setErrors(newErrors);
+      addToast("error", "Please fix the errors in the form");
       return;
     }
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      setLoading(false);
-      return;
-    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/auth/signup", {
@@ -61,9 +98,18 @@ export default function SignupPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
-      router.push("/login?registered=true");
-    } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
+      if (!res.ok) {
+        addToast("error", data.error || "Registration failed");
+        setLoading(false);
+        return;
+      }
+      addToast("success", "Account created successfully! Redirecting to login...");
+      setTimeout(() => router.push("/login?registered=true"), 1500);
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,27 +136,25 @@ export default function SignupPage() {
           <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Create Account</h2>
           <p className="text-gray-400 text-[14px] mb-8">Fill in your details to get started</p>
 
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">{error}</div>
-          )}
-
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[13px] font-medium text-gray-600 mb-1.5">First Name</label>
-                <div className="flex items-center border border-gray-200 rounded-lg px-3">
+                <div className={`flex items-center border rounded-lg px-3 ${errors.firstName ? 'border-red-300' : 'border-gray-200'}`}>
                   <UserIcon className="text-gray-400 mr-2" size={18} />
-                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required
+                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} onBlur={handleBlur} required
                     className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="First" />
                 </div>
+                {errors.firstName && <p className="text-red-500 text-[12px] mt-1">{errors.firstName}</p>}
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Last Name</label>
-                <div className="flex items-center border border-gray-200 rounded-lg px-3">
+                <div className={`flex items-center border rounded-lg px-3 ${errors.lastName ? 'border-red-300' : 'border-gray-200'}`}>
                   <UserIcon className="text-gray-400 mr-2" size={18} />
-                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required
+                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} onBlur={handleBlur} required
                     className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Last" />
                 </div>
+                {errors.lastName && <p className="text-red-500 text-[12px] mt-1">{errors.lastName}</p>}
               </div>
             </div>
 
@@ -125,57 +169,63 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Email</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className={`flex items-center border rounded-lg px-3 ${errors.email ? 'border-red-300' : 'border-gray-200'}`}>
                 <MailIcon className="text-gray-400 mr-2" size={18} />
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required
+                <input type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} required
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
               </div>
+              {errors.email && <p className="text-red-500 text-[12px] mt-1">{errors.email}</p>}
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">ID Number</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className={`flex items-center border rounded-lg px-3 ${errors.idNumber ? 'border-red-300' : 'border-gray-200'}`}>
                 <IdCardIcon className="text-gray-400 mr-2" size={18} />
-                <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} required
+                <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} onBlur={handleBlur} required
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
               </div>
+              {errors.idNumber && <p className="text-red-500 text-[12px] mt-1">{errors.idNumber}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Course</label>
-                <select name="course" value={formData.course} onChange={handleChange} required
-                  className="w-full py-3 border border-gray-200 rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary">
+                <select name="course" value={formData.course} onChange={handleChange} onBlur={handleBlur} required
+                  className={`w-full py-3 border rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary ${errors.course ? 'border-red-300' : 'border-gray-200'}`}>
                   <option value="">Select course</option>
                   {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+                {errors.course && <p className="text-red-500 text-[12px] mt-1">{errors.course}</p>}
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Year Level</label>
-                <select name="yearLevel" value={formData.yearLevel} onChange={handleChange} required
-                  className="w-full py-3 border border-gray-200 rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary">
+                <select name="yearLevel" value={formData.yearLevel} onChange={handleChange} onBlur={handleBlur} required
+                  className={`w-full py-3 border rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary ${errors.yearLevel ? 'border-red-300' : 'border-gray-200'}`}>
                   <option value="">Select year</option>
                   {YEAR_LEVELS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
+                {errors.yearLevel && <p className="text-red-500 text-[12px] mt-1">{errors.yearLevel}</p>}
               </div>
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Password</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className={`flex items-center border rounded-lg px-3 ${errors.password ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength={6}
+                <input type="password" name="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
               </div>
+              {errors.password && <p className="text-red-500 text-[12px] mt-1">{errors.password}</p>}
             </div>
 
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm Password</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className={`flex items-center border rounded-lg px-3 ${errors.confirmPassword ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required minLength={6}
+                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter password" />
               </div>
+              {errors.confirmPassword && <p className="text-red-500 text-[12px] mt-1">{errors.confirmPassword}</p>}
             </div>
           </div>
 
