@@ -73,11 +73,13 @@ export async function updateSession(request: NextRequest) {
 
   // Use cached service client for user lookup
   const supabaseAdmin = getAdminClient();
-  const { data: dbUser } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from("users")
     .select("role, active_status")
     .eq("auth_id", user.id)
     .single();
+
+  const dbUser = data as { role: string; active_status: string } | null;
 
   if (!dbUser) {
     const url = request.nextUrl.clone();
