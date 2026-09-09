@@ -75,7 +75,7 @@ export default function Navbar({ user }: NavbarProps) {
             <HospitalIcon className="text-white" size={20} />
           </div>
           <h2 className="text-[20px] font-bold text-[#1a1a2e] m-0 tracking-tight">
-            MEDI<span className="text-primary">SCHED</span>
+            MEDI<span className="text-primary">SCHED</span> CERT
           </h2>
         </Link>
 
