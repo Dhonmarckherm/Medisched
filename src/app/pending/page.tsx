@@ -1,30 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
+import { SearchBar } from "@/components/SearchBar";
+import { useToast } from "@/components/Toast";
+import { CheckCircleIcon, XCircleIcon, CalendarIcon, CertificateIcon } from "@/components/Icons";
 
 export default function PendingListPage() {
   const [user, setUser] = useState<any>(null);
   const [pendingAppts, setPendingAppts] = useState<any[]>([]);
   const [pendingCerts, setPendingCerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<"appointments" | "certificates">("appointments");
   const supabase = createClient();
+  const { addToast } = useToast();
 
   const fetchData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return;
-    const { data: dbUser } = await supabase
-      .from("users").select("*").eq("auth_id", authUser.id).single();
+    const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
     setUser(dbUser);
 
     const isAdminOrNurse = dbUser?.role === "admin" || dbUser?.role === "nurse";
 
-    let apptQ = supabase.from("appointments").select("*")
-      .eq("status", "Pending").order("created_at", { ascending: false });
-    let certQ = supabase.from("certificates").select("*")
-      .eq("status", "Pending").order("created_at", { ascending: false });
+    let apptQ = supabase.from("appointments").select("*").eq("status", "Pending").order("created_at", { ascending: false });
+    let certQ = supabase.from("certificates").select("*").eq("status", "Pending").order("created_at", { ascending: false });
 
     if (!isAdminOrNurse) {
       apptQ = apptQ.eq("user_id", dbUser.id);
@@ -41,111 +44,198 @@ export default function PendingListPage() {
 
   const handleAction = async (id: string, type: "appointment" | "certificate", action: "Approved" | "Rejected") => {
     const table = type === "appointment" ? "appointments" : "certificates";
-    await supabase.from(table).update({ status: action }).eq("id", id);
+    const { error } = await supabase.from(table).update({ status: action }).eq("id", id);
+
+    if (error) {
+      addToast("error", `Failed to ${action === "Approved" ? "approve" : "reject"} item`);
+      return;
+    }
+
     if (type === "appointment") {
       setPendingAppts((prev) => prev.filter((a) => a.id !== id));
     } else {
       setPendingCerts((prev) => prev.filter((c) => c.id !== id));
     }
+    addToast("success", `${type === "appointment" ? "Appointment" : "Certificate"} ${action.toLowerCase()} successfully`);
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#f5f8fb" }}>Loading...</div>;
+  const filteredAppts = useMemo(() => {
+    if (!search.trim()) return pendingAppts;
+    const q = search.toLowerCase();
+    return pendingAppts.filter((a) =>
+      `${a.firstname} ${a.lastname}`.toLowerCase().includes(q) ||
+      a.student_id?.toLowerCase().includes(q) ||
+      a.purpose?.toLowerCase().includes(q)
+    );
+  }, [pendingAppts, search]);
+
+  const filteredCerts = useMemo(() => {
+    if (!search.trim()) return pendingCerts;
+    const q = search.toLowerCase();
+    return pendingCerts.filter((c) =>
+      `${c.firstname} ${c.lastname}`.toLowerCase().includes(q) ||
+      c.student_id?.toLowerCase().includes(q) ||
+      c.purpose?.toLowerCase().includes(q)
+    );
+  }, [pendingCerts, search]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#f8faf9" }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 text-[14px]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const isAdminOrNurse = user?.role === "admin" || user?.role === "nurse";
 
   return (
-    <div className="min-h-screen" style={{ background: "#f5f8fb" }}>
+    <div className="min-h-screen" style={{ background: "#f8faf9" }}>
       <Navbar user={user} />
       <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
-        <h1 className="text-[30px] font-bold text-[#222] mb-8">Pending Items</h1>
-
-        {/* Pending Appointments */}
-        <div className="bg-white p-[35px] rounded-[18px] shadow-card mb-8">
-          <h2 className="text-[26px] text-primary font-bold mb-5">
-            Pending Appointments ({pendingAppts.length})
-          </h2>
-          {pendingAppts.length === 0 ? (
-            <p className="text-[#555] text-center py-8">No pending appointments</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Name</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Date</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Purpose</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Status</th>
-                    {isAdminOrNurse && <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingAppts.map((appt, i) => (
-                    <tr key={appt.id} className={i % 2 === 1 ? "bg-[#f9f9f9]" : ""}>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px]">{appt.firstname} {appt.lastname}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px]">{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px] max-w-xs truncate">{appt.purpose}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4"><StatusBadge status={appt.status} /></td>
-                      {isAdminOrNurse && (
-                        <td className="border border-[#ddd] py-3.5 px-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => handleAction(appt.id, "appointment", "Approved")}
-                              className="px-3 py-1.5 bg-primary text-white rounded-full text-[13px] font-semibold border-none cursor-pointer hover:bg-primary-hover hover:-translate-y-0.5 transition">Approve</button>
-                            <button onClick={() => handleAction(appt.id, "appointment", "Rejected")}
-                              className="px-3 py-1.5 bg-[#dc3545] text-white rounded-full text-[13px] font-semibold border-none cursor-pointer hover:bg-[#c82333] hover:-translate-y-0.5 transition">Reject</button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="mb-8">
+          <h1 className="text-[28px] font-bold text-[#1a1a2e]">Pending Items</h1>
+          <p className="text-gray-400 text-[14px] mt-1">Review and manage pending requests</p>
         </div>
 
-        {/* Pending Certificates */}
-        <div className="bg-white p-[35px] rounded-[18px] shadow-card">
-          <h2 className="text-[26px] text-primary font-bold mb-5">
-            Pending Certificates ({pendingCerts.length})
-          </h2>
-          {pendingCerts.length === 0 ? (
-            <p className="text-[#555] text-center py-8">No pending certificates</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Name</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Date Needed</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Purpose</th>
-                    <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Status</th>
-                    {isAdminOrNurse && <th className="bg-primary text-white font-semibold py-3.5 px-4 text-left text-[14px]">Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingCerts.map((cert, i) => (
-                    <tr key={cert.id} className={i % 2 === 1 ? "bg-[#f9f9f9]" : ""}>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px]">{cert.firstname} {cert.lastname}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px]">{new Date(cert.date_needed).toLocaleDateString()}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4 text-[14px] max-w-xs truncate">{cert.purpose}</td>
-                      <td className="border border-[#ddd] py-3.5 px-4"><StatusBadge status={cert.status} /></td>
-                      {isAdminOrNurse && (
-                        <td className="border border-[#ddd] py-3.5 px-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => handleAction(cert.id, "certificate", "Approved")}
-                              className="px-3 py-1.5 bg-primary text-white rounded-full text-[13px] font-semibold border-none cursor-pointer hover:bg-primary-hover hover:-translate-y-0.5 transition">Approve</button>
-                            <button onClick={() => handleAction(cert.id, "certificate", "Rejected")}
-                              className="px-3 py-1.5 bg-[#dc3545] text-white rounded-full text-[13px] font-semibold border-none cursor-pointer hover:bg-[#c82333] hover:-translate-y-0.5 transition">Reject</button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        {/* Search & Tabs */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex-1">
+            <SearchBar value={search} onChange={setSearch} placeholder="Search by name, ID, or purpose..." />
+          </div>
         </div>
+
+        {/* Tab Switcher */}
+        <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setTab("appointments")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-[14px] font-medium border-none cursor-pointer transition ${
+              tab === "appointments" ? "bg-white text-primary shadow-sm" : "bg-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <CalendarIcon size={16} /> Appointments
+            <span className="bg-primary/10 text-primary text-[12px] px-1.5 py-0.5 rounded-full">{pendingAppts.length}</span>
+          </button>
+          <button
+            onClick={() => setTab("certificates")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-[14px] font-medium border-none cursor-pointer transition ${
+              tab === "certificates" ? "bg-white text-primary shadow-sm" : "bg-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <CertificateIcon size={16} /> Certificates
+            <span className="bg-primary/10 text-primary text-[12px] px-1.5 py-0.5 rounded-full">{pendingCerts.length}</span>
+          </button>
+        </div>
+
+        {/* Content */}
+        {tab === "appointments" ? (
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            {filteredAppts.length === 0 ? (
+              <div className="p-12 text-center">
+                <CalendarIcon className="text-gray-300 mx-auto mb-3" size={40} />
+                <p className="text-gray-400 text-[15px]">
+                  {pendingAppts.length === 0 ? "No pending appointments" : "No results match your search"}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Student ID</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Purpose</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      {isAdminOrNurse && <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAppts.map((appt) => (
+                      <tr key={appt.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                        <td className="py-3 px-4 text-[14px] text-gray-700">{appt.firstname} {appt.lastname}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{appt.student_id || "N/A"}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 hidden md:table-cell">{new Date(appt.appointment_date).toLocaleDateString()}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden lg:table-cell">{appt.purpose}</td>
+                        <td className="py-3 px-4"><StatusBadge status={appt.status} /></td>
+                        {isAdminOrNurse && (
+                          <td className="py-3 px-4">
+                            <div className="flex gap-1.5">
+                              <button onClick={() => handleAction(appt.id, "appointment", "Approved")}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition"
+                                title="Approve">
+                                <CheckCircleIcon size={14} /> Approve
+                              </button>
+                              <button onClick={() => handleAction(appt.id, "appointment", "Rejected")}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition"
+                                title="Reject">
+                                <XCircleIcon size={14} /> Reject
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            {filteredCerts.length === 0 ? (
+              <div className="p-12 text-center">
+                <CertificateIcon className="text-gray-300 mx-auto mb-3" size={40} />
+                <p className="text-gray-400 text-[15px]">
+                  {pendingCerts.length === 0 ? "No pending certificates" : "No results match your search"}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Student ID</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date Needed</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Purpose</th>
+                      <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      {isAdminOrNurse && <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCerts.map((cert) => (
+                      <tr key={cert.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                        <td className="py-3 px-4 text-[14px] text-gray-700">{cert.firstname} {cert.lastname}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{cert.student_id || "N/A"}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 hidden md:table-cell">{new Date(cert.date_needed).toLocaleDateString()}</td>
+                        <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden lg:table-cell">{cert.purpose}</td>
+                        <td className="py-3 px-4"><StatusBadge status={cert.status} /></td>
+                        {isAdminOrNurse && (
+                          <td className="py-3 px-4">
+                            <div className="flex gap-1.5">
+                              <button onClick={() => handleAction(cert.id, "certificate", "Approved")}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition">
+                                <CheckCircleIcon size={14} /> Approve
+                              </button>
+                              <button onClick={() => handleAction(cert.id, "certificate", "Rejected")}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition">
+                                <XCircleIcon size={14} /> Reject
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
