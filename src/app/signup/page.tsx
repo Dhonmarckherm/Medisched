@@ -3,19 +3,33 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+
+const COURSES = [
+  "BS Nursing",
+  "BS Midwifery",
+  "BS Medical Technology",
+  "BS Pharmacy",
+  "BS Physical Therapy",
+  "BS Radiologic Technology",
+  "BS Respiratory Therapy",
+  "BS Occupational Therapy",
+  "BS Speech-Language Pathology",
+  "Other",
+];
+
+const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
-    firstName: "", lastName: "", middleName: "", email: "", idNumber: "", password: "", confirmPassword: "",
+    firstName: "", lastName: "", middleName: "", email: "", idNumber: "",
+    password: "", confirmPassword: "", course: "", yearLevel: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -43,6 +57,7 @@ export default function SignupPage() {
           first_name: formData.firstName, last_name: formData.lastName,
           middle_name: formData.middleName || null, email: formData.email,
           id_number: formData.idNumber, password: formData.password,
+          course: formData.course, year_level: formData.yearLevel,
         }),
       });
       const data = await res.json();
@@ -123,6 +138,25 @@ export default function SignupPage() {
                 <IdCardIcon className="text-gray-400 mr-2" size={18} />
                 <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} required
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Course</label>
+                <select name="course" value={formData.course} onChange={handleChange} required
+                  className="w-full py-3 border border-gray-200 rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary">
+                  <option value="">Select course</option>
+                  {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Year Level</label>
+                <select name="yearLevel" value={formData.yearLevel} onChange={handleChange} required
+                  className="w-full py-3 border border-gray-200 rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary">
+                  <option value="">Select year</option>
+                  {YEAR_LEVELS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
               </div>
             </div>
 
