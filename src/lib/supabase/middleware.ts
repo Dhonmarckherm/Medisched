@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -49,12 +50,29 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Get user role from database
-  const { data: dbUser } = await supabase
-    .from("users")
-    .select("role, active_status")
-    .eq("auth_id", user.id)
-    .single();
+  // Use service client to look up user role (bypasses RLS, avoids infinite recursion)
+  let dbUser = null;
+  try {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data } = await supabaseAdmin
+      .from("users")
+      .select("role, active_status")
+      .eq("auth_id", user.id)
+      .single();
+    dbUser = data;
+  } catch {
+    // If service client fails, try anon client
+    const { data } = await supabase
+      .from("users")
+      .select("role, active_status")
+      .eq("auth_id", user.id)
+      .single();
+    dbUser = data;
+  }
 
   if (!dbUser) {
     const url = request.nextUrl.clone();

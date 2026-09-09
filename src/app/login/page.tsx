@@ -45,10 +45,7 @@ function LoginForm() {
         return;
       }
 
-      // Refresh router to ensure middleware picks up the new session cookie
-      router.refresh();
-
-      // Redirect based on role
+      // Redirect based on role (push navigates to new page where middleware reads the session cookie)
       if (data.user.role === "admin" || data.user.role === "nurse") {
         router.push("/admin");
       } else {
