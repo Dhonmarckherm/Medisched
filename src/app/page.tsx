@@ -1,11 +1,29 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { createClient } from "@/lib/supabase/server";
 import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, HospitalIcon, StethoscopeIcon, ClipboardIcon, ActivityIcon } from "@/components/Icons";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Detect logged-in user so Navbar shows correct state
+  let dbUser = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from("users")
+        .select("first_name, last_name, role")
+        .eq("auth_id", user.id)
+        .single();
+      dbUser = data;
+    }
+  } catch {
+    // Not logged in, that's fine
+  }
+
   return (
     <div className="min-h-screen">
-      <Navbar user={null} />
+      <Navbar user={dbUser} />
 
       {/* Hero */}
       <section className="pt-[130px] min-h-screen flex items-center bg-white">
