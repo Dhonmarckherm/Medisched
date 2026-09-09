@@ -71,21 +71,23 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* Quick Actions & Schedule */}
+          {/* Quick Actions & Schedule - Only for students */}
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-gray-100">
-              <h2 className="text-[18px] font-semibold text-[#1a1a2e] mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <Link href="/appointments/new"
-                  className="flex items-center gap-3 w-full py-3 px-4 bg-primary/5 text-primary rounded-lg no-underline font-medium text-[14px] hover:bg-primary/10 transition">
-                  <CalendarIcon size={18} /> Request Appointment
-                </Link>
-                <Link href="/certificates/new"
-                  className="flex items-center gap-3 w-full py-3 px-4 bg-primary/5 text-primary rounded-lg no-underline font-medium text-[14px] hover:bg-primary/10 transition">
-                  <CertificateIcon size={18} /> Request Certificate
-                </Link>
+            {dbUser.role === "student" && (
+              <div className="bg-white p-6 rounded-xl border border-gray-100">
+                <h2 className="text-[18px] font-semibold text-[#1a1a2e] mb-4">Quick Actions</h2>
+                <div className="space-y-3">
+                  <Link href="/appointments/new"
+                    className="flex items-center gap-3 w-full py-3 px-4 bg-primary/5 text-primary rounded-lg no-underline font-medium text-[14px] hover:bg-primary/10 transition">
+                    <CalendarIcon size={18} /> Request Appointment
+                  </Link>
+                  <Link href="/certificates/new"
+                    className="flex items-center gap-3 w-full py-3 px-4 bg-primary/5 text-primary rounded-lg no-underline font-medium text-[14px] hover:bg-primary/10 transition">
+                    <CertificateIcon size={18} /> Request Certificate
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
 
             {accommodation.data && (
               <div className="bg-white p-6 rounded-xl border border-gray-100">
