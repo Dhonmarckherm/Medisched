@@ -70,7 +70,7 @@ export default function Navbar({ user }: NavbarProps) {
           {user ? (
             <>
               <Link href="/profile" className="nav-link text-[14px]">
-                {user.first_name} {user.last_name}
+                Profile
               </Link>
               <button
                 onClick={handleLogout}
