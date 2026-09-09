@@ -214,22 +214,33 @@ export default function Navbar({ user }: NavbarProps) {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu - Side Drawer */}
       {mobileOpen && (
-        <div className="fixed top-[72px] left-0 right-0 bottom-0 z-[999] lg:hidden">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="relative bg-white rounded-b-2xl shadow-2xl border-b border-gray-100 overflow-hidden animate-slide-down">
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-[999] lg:hidden">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right">
             {/* User info header (if logged in) */}
             {user && (
-              <div className="px-5 py-4 bg-gradient-to-r from-primary/5 to-emerald-50/50 border-b border-gray-100">
+              <div className="px-5 py-5 bg-gradient-to-r from-primary to-emerald-600 text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-white font-bold text-[14px]">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-bold text-[16px]">
                     {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
                   </div>
                   <div>
-                    <div className="text-[14px] font-semibold text-[#1a1a2e]">{user.first_name} {user.last_name}</div>
-                    <div className="text-[12px] text-gray-400 capitalize">{user.role}</div>
+                    <div className="text-[15px] font-semibold">{user.first_name} {user.last_name}</div>
+                    <div className="text-[12px] text-white/70 capitalize">{user.role}</div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {!user && (
+              <div className="px-5 py-5 bg-gradient-to-r from-primary to-emerald-600 text-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                    <HospitalIcon className="text-white" size={18} />
+                  </div>
+                  <span className="text-[16px] font-bold">MEDISCHED <span className="text-white/70">CERT</span></span>
                 </div>
               </div>
             )}
@@ -344,13 +355,13 @@ export default function Navbar({ user }: NavbarProps) {
                     </span>
                   </Link>
                   <div className="h-px bg-gray-100 my-2 mx-3"></div>
-                  <div className="flex gap-2 mt-2 px-1">
+                  <div className="flex flex-col gap-2 mt-2 px-1">
                     <Link href="/login" onClick={() => setMobileOpen(false)}
-                      className="flex-1 py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-[14px] no-underline text-center hover:border-primary hover:text-primary transition">
+                      className="py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-[14px] no-underline text-center hover:border-primary hover:text-primary transition">
                       Login
                     </Link>
                     <Link href="/signup" onClick={() => setMobileOpen(false)}
-                      className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-[14px] no-underline text-center hover:bg-primary-hover transition">
+                      className="py-3 bg-primary text-white rounded-xl font-semibold text-[14px] no-underline text-center hover:bg-primary-hover transition">
                       Sign Up
                     </Link>
                   </div>
