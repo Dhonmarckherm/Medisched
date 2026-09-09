@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
-import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon } from "@/components/Icons";
+import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon } from "@/components/Icons";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -39,7 +39,7 @@ export default async function AdminDashboardPage() {
       <Navbar user={dbUser} />
       <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
         <div className="mb-8">
-          <h1 className="text-[24px] font-bold text-[#1a1a2e]">Admin Dashboard</h1>
+          <h1 className="text-[28px] font-bold text-[#1a1a2e]">Admin Dashboard</h1>
           <p className="text-gray-400 mt-1 text-[14px]">
             Welcome, {dbUser.first_name} {dbUser.last_name} &middot; <span className="capitalize text-primary font-medium">{dbUser.role}</span>
           </p>
@@ -55,91 +55,102 @@ export default async function AdminDashboardPage() {
 
         {/* Management Links */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <Link href="/admin/appointments" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+          <Link href="/admin/appointments" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
               <CalendarIcon size={20} />
             </div>
             <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Appointments</p>
             <p className="text-gray-400 text-[13px] mt-1">View and manage all appointments</p>
+            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
           </Link>
-          <Link href="/admin/certificates" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+          <Link href="/admin/certificates" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
               <CertificateIcon size={20} />
             </div>
             <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Certificates</p>
             <p className="text-gray-400 text-[13px] mt-1">View and manage all certificates</p>
+            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
           </Link>
           {isAdmin && (
-            <Link href="/admin/users" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+            <Link href="/admin/users" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
                 <UsersIcon size={20} />
               </div>
               <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Users</p>
               <p className="text-gray-400 text-[13px] mt-1">Manage roles and permissions</p>
+              <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
             </Link>
           )}
         </div>
 
         {/* Pending Tables */}
-        <div className="bg-white p-6 rounded-xl border border-gray-100 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-[18px] font-semibold text-[#1a1a2e]">Pending Appointments</h2>
-            <Link href="/admin/appointments" className="text-[13px] text-primary no-underline font-medium hover:underline">View All</Link>
+        <div className="bg-white rounded-xl border border-gray-100 mb-6 overflow-hidden">
+          <div className="flex justify-between items-center p-6 pb-4">
+            <h2 className="text-[16px] font-semibold text-[#1a1a2e]">Pending Appointments</h2>
+            <Link href="/admin/appointments" className="text-[13px] text-primary no-underline font-medium hover:underline flex items-center gap-1">
+              View All <ArrowRightIcon size={14} />
+            </Link>
           </div>
           {(!pendingAppts || pendingAppts.length === 0) ? (
             <p className="text-gray-400 text-center py-8 text-[14px]">No pending appointments</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Name</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Date</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Purpose</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingAppts.map((appt: any) => (
-                  <tr key={appt.id} className="border-t border-gray-50">
-                    <td className="py-3 text-[14px] text-gray-600">{appt.firstname} {appt.lastname}</td>
-                    <td className="py-3 text-[14px] text-gray-500">{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                    <td className="py-3 text-[14px] text-gray-500 max-w-xs truncate">{appt.purpose}</td>
-                    <td className="py-3"><StatusBadge status={appt.status} /></td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Date</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Purpose</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pendingAppts.map((appt: any) => (
+                    <tr key={appt.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                      <td className="py-3 px-4 text-[14px] text-gray-700">{appt.firstname} {appt.lastname}</td>
+                      <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{new Date(appt.appointment_date).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden md:table-cell">{appt.purpose}</td>
+                      <td className="py-3 px-4"><StatusBadge status={appt.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-[18px] font-semibold text-[#1a1a2e]">Pending Certificates</h2>
-            <Link href="/admin/certificates" className="text-[13px] text-primary no-underline font-medium hover:underline">View All</Link>
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="flex justify-between items-center p-6 pb-4">
+            <h2 className="text-[16px] font-semibold text-[#1a1a2e]">Pending Certificates</h2>
+            <Link href="/admin/certificates" className="text-[13px] text-primary no-underline font-medium hover:underline flex items-center gap-1">
+              View All <ArrowRightIcon size={14} />
+            </Link>
           </div>
           {(!pendingCerts || pendingCerts.length === 0) ? (
             <p className="text-gray-400 text-center py-8 text-[14px]">No pending certificates</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Name</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Date Needed</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Purpose</th>
-                  <th className="text-left text-[12px] font-medium text-gray-400 uppercase tracking-wider pb-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingCerts.map((cert: any) => (
-                  <tr key={cert.id} className="border-t border-gray-50">
-                    <td className="py-3 text-[14px] text-gray-600">{cert.firstname} {cert.lastname}</td>
-                    <td className="py-3 text-[14px] text-gray-500">{new Date(cert.date_needed).toLocaleDateString()}</td>
-                    <td className="py-3 text-[14px] text-gray-500 max-w-xs truncate">{cert.purpose}</td>
-                    <td className="py-3"><StatusBadge status={cert.status} /></td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Date Needed</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Purpose</th>
+                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pendingCerts.map((cert: any) => (
+                    <tr key={cert.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                      <td className="py-3 px-4 text-[14px] text-gray-700">{cert.firstname} {cert.lastname}</td>
+                      <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{new Date(cert.date_needed).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden md:table-cell">{cert.purpose}</td>
+                      <td className="py-3 px-4"><StatusBadge status={cert.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </main>
