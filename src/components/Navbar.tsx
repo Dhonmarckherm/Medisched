@@ -158,6 +158,15 @@ export default function Navbar({ user }: NavbarProps) {
             </>
           ) : (
             <>
+              <Link href="/" className="nav-link text-[14px]">
+                Home
+              </Link>
+              <Link href="/appointments" className="nav-link text-[14px]">
+                Appointments
+              </Link>
+              <Link href="/certificates" className="nav-link text-[14px]">
+                Certificates
+              </Link>
               <Link href="/login" className="text-[14px] text-gray-600 hover:text-primary font-medium no-underline px-4 py-2 rounded-lg hover:bg-gray-50">
                 Login
               </Link>
@@ -206,6 +215,8 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             ) : (
               <>
+                <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Appointments</Link>
+                <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Certificates</Link>
                 <Link href="/login" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Login</Link>
                 <Link href="/signup" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>Get Started</Link>
               </>
