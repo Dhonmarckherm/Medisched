@@ -206,7 +206,7 @@ export default function Navbar({ user }: NavbarProps) {
 
         {/* Mobile Menu Button */}
         <button
-          className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition"
+          className="lg:hidden relative z-[1001] text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition"
           onClick={() => setMobileOpen(!mobileOpen)}
           style={{ minWidth: 44, minHeight: 44 }}
         >
@@ -216,9 +216,9 @@ export default function Navbar({ user }: NavbarProps) {
 
       {/* Mobile Menu Overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[999] lg:hidden">
+        <div className="fixed top-[72px] left-0 right-0 bottom-0 z-[999] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute top-[72px] left-0 right-0 bg-white rounded-b-2xl shadow-2xl border-b border-gray-100 overflow-hidden animate-slide-down">
+          <div className="relative bg-white rounded-b-2xl shadow-2xl border-b border-gray-100 overflow-hidden animate-slide-down">
             {/* User info header (if logged in) */}
             {user && (
               <div className="px-5 py-4 bg-gradient-to-r from-primary/5 to-emerald-50/50 border-b border-gray-100">
