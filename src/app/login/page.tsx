@@ -3,7 +3,6 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
 
 export default function LoginPage() {
@@ -22,7 +21,6 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   const redirectError = searchParams.get("error");
 
@@ -32,64 +30,30 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const { data: user, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .eq("id_number", idNumber)
-        .single();
-
-      if (userError || !user) {
-        setError("Invalid credentials");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/api/auth/verify-password", {
+      // Use server-side login API which properly sets session cookies
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, userId: user.id }),
+        body: JSON.stringify({ email, id_number: idNumber, password }),
       });
 
       const data = await res.json();
 
-      if (!data.valid) {
-        setError("Invalid credentials");
+      if (!res.ok) {
+        setError(data.error || "Login failed");
         setLoading(false);
         return;
       }
 
-      if (user.active_status !== "active") {
-        setError("Your account has been deactivated. Contact admin.");
-        setLoading(false);
-        return;
-      }
+      // Refresh router to ensure middleware picks up the new session cookie
+      router.refresh();
 
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (authError) {
-        const sessionRes = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, id_number: idNumber, password }),
-        });
-        const sessionData = await sessionRes.json();
-        if (!sessionRes.ok) {
-          setError(sessionData.error || "Login failed");
-          setLoading(false);
-          return;
-        }
-      }
-
-      if (user.role === "admin" || user.role === "nurse") {
+      // Redirect based on role
+      if (data.user.role === "admin" || data.user.role === "nurse") {
         router.push("/admin");
       } else {
         router.push("/dashboard");
       }
-      router.refresh();
     } catch {
       setError("An unexpected error occurred");
     } finally {

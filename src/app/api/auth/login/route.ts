@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -14,10 +15,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    // Use service client to bypass RLS (user not authenticated yet)
+    const supabaseAdmin = createServiceClient();
 
     // Find user
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", email)
@@ -48,8 +50,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sign in with Supabase Auth for session management
-    await supabase.auth.signInWithPassword({ email, password });
+    // Sign in with Supabase Auth using the server client (sets session cookies)
+    const supabase = await createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      return NextResponse.json(
+        { error: "Authentication failed: " + authError.message },
+        { status: 401 }
+      );
+    }
 
     return NextResponse.json({
       message: "Login successful",
