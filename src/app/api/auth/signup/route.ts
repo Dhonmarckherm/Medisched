@@ -1,0 +1,91 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import bcrypt from "bcryptjs";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { first_name, last_name, middle_name, email, id_number, password } = body;
+
+    // Validate required fields
+    if (!first_name || !last_name || !email || !id_number || !password) {
+      return NextResponse.json(
+        { error: "All required fields must be filled" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    // Check if email or ID number already exists
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .or(`email.eq.${email},id_number.eq.${id_number}`)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return NextResponse.json(
+        { error: "Email or ID Number already exists" },
+        { status: 400 }
+      );
+    }
+
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 12);
+
+    // Create Supabase Auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError && !authError.message.includes("already been registered")) {
+      return NextResponse.json(
+        { error: authError.message },
+        { status: 400 }
+      );
+    }
+
+    // Create user in our database
+    const { data: dbUser, error: dbError } = await supabase
+      .from("users")
+      .insert({
+        auth_id: authData.user?.id || null,
+        email,
+        id_number,
+        password_hash,
+        first_name,
+        last_name,
+        middle_name: middle_name || null,
+        role: "student",
+        active_status: "active",
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      return NextResponse.json(
+        { error: "Failed to create user: " + dbError.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Account created successfully", user: dbUser },
+      { status: 201 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

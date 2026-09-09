@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   MEDISCHED CERT - Design System
+   ============================================ */
+
+:root {
+  /* Primary Colors */
+  --primary-green: #2e8b57;
+  --primary-green-hover: #256d46;
+  --primary-green-dark: #198754;
+
+  /* Background Colors */
+  --bg-light: #f5f8fb;
+  --bg-white: #ffffff;
+  --bg-gray: #f9f9f9;
+  --bg-form: #f4f8f5;
+
+  /* Text Colors */
+  --text-dark: #222;
+  --text-body: #333;
+  --text-muted: #555;
+  --text-light: #666;
+  --text-placeholder: #999;
+
+  /* Status Colors */
+  --success-bg: #d1e7dd;
+  --success-text: #0f5132;
+  --success-border: #198754;
+  --error-bg: #f8d7da;
+  --error-text: #842029;
+  --error-border: #dc3545;
+  --warning-bg: #fff3cd;
+  --warning-text: #664d03;
+  --warning-border: #ffc107;
+
+  /* Border Colors */
+  --border-light: #ddd;
+  --border-medium: #dcdcdc;
+  --border-dark: #e0e0e0;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-body);
+  background: var(--bg-light);
+  line-height: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.fade-up { animation: fadeUp 0.8s ease; }
+.fade-in { animation: fadeIn 1s ease-in; }
+.slide-in { animation: slideIn 0.6s ease; }
+.zoom-in { animation: zoomIn 0.6s ease; }
+.pulse:hover { animation: pulse 0.6s ease-in-out; }
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e9ecef;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2e8b57;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1f6f46;
+}
+
+/* ============================================
+   Global Transitions
+   ============================================ */
+
+a, button, .service-card, .dashboard-card, .stat-box, .card-btn, .submit-btn {
+  transition: all 0.3s ease;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
