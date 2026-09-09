@@ -22,6 +22,7 @@ export default function Navbar({ user }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   // Fetch pending counts for admin/nurse
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function Navbar({ user }: NavbarProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setLogoutModal(false);
     router.push("/login");
     router.refresh();
   };
@@ -148,7 +150,7 @@ export default function Navbar({ user }: NavbarProps) {
                 Profile
               </Link>
               <button
-                onClick={handleLogout}
+                onClick={() => setLogoutModal(true)}
                 className="text-[14px] text-gray-500 hover:text-red-500 font-medium bg-transparent border-none cursor-pointer px-3 py-1.5 rounded-lg hover:bg-red-50"
               >
                 Logout
@@ -196,7 +198,7 @@ export default function Navbar({ user }: NavbarProps) {
                   </>
                 )}
                 <button
-                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  onClick={() => { setLogoutModal(true); setMobileOpen(false); }}
                   className="mt-2 py-2.5 bg-primary text-white rounded-lg font-medium border-none cursor-pointer text-[14px]"
                 >
                   Logout
@@ -209,6 +211,36 @@ export default function Navbar({ user }: NavbarProps) {
               </>
             )}
           </nav>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {logoutModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setLogoutModal(false)} />
+          <div className="relative bg-white rounded-2xl p-6 w-[90%] max-w-[380px] shadow-xl animate-scale-in">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <XIcon className="text-red-500" size={28} />
+              </div>
+              <h3 className="text-[18px] font-bold text-[#1a1a2e] mb-2">Confirm Logout</h3>
+              <p className="text-[14px] text-gray-400 mb-6">Are you sure you want to sign out of your account?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setLogoutModal(false)}
+                  className="flex-1 py-2.5 border border-gray-200 rounded-lg text-[14px] font-medium text-gray-600 bg-white cursor-pointer hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 py-2.5 bg-red-500 text-white rounded-lg text-[14px] font-medium border-none cursor-pointer hover:bg-red-600 transition"
+                >
+                  Yes, Logout
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
