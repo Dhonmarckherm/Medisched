@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, HospitalIcon } from "@/components/Icons";
+import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, HospitalIcon, StethoscopeIcon, ClipboardIcon, ActivityIcon } from "@/components/Icons";
 
 export default function HomePage() {
   return (
@@ -33,8 +33,53 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="w-[320px] h-[320px] bg-primary/5 rounded-2xl flex items-center justify-center">
-              <HospitalIcon className="text-primary" size={120} />
+            <div className="w-[360px] h-[340px] bg-primary/5 rounded-2xl p-6 flex flex-col gap-4">
+              {/* Header bar */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                  <HospitalIcon className="text-white" size={20} />
+                </div>
+                <div>
+                  <div className="text-[14px] font-semibold text-[#1a1a2e]">MEDISCHED CERT</div>
+                  <div className="text-[11px] text-gray-400">Medical Clinic Portal</div>
+                </div>
+              </div>
+              {/* Stats row */}
+              <div className="flex gap-3">
+                <div className="flex-1 bg-white rounded-lg p-3 border border-gray-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded bg-emerald-50 flex items-center justify-center text-emerald-600"><CalendarIcon size={14} /></div>
+                    <span className="text-[10px] text-gray-400 font-medium">APPOINTMENTS</span>
+                  </div>
+                  <div className="text-[20px] font-bold text-[#1a1a2e]">24</div>
+                </div>
+                <div className="flex-1 bg-white rounded-lg p-3 border border-gray-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-blue-600"><CertificateIcon size={14} /></div>
+                    <span className="text-[10px] text-gray-400 font-medium">CERTIFICATES</span>
+                  </div>
+                  <div className="text-[20px] font-bold text-[#1a1a2e]">18</div>
+                </div>
+              </div>
+              {/* Activity list */}
+              <div className="bg-white rounded-lg border border-gray-100 p-3 flex-1">
+                <div className="text-[11px] font-medium text-gray-400 mb-2">RECENT ACTIVITY</div>
+                <div className="flex items-center gap-2 py-1.5 border-b border-gray-50">
+                  <div className="w-5 h-5 rounded-full bg-amber-50 flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div></div>
+                  <span className="text-[11px] text-gray-500 flex-1">Appointment request submitted</span>
+                  <span className="text-[10px] text-gray-300">2m ago</span>
+                </div>
+                <div className="flex items-center gap-2 py-1.5 border-b border-gray-50">
+                  <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div></div>
+                  <span className="text-[11px] text-gray-500 flex-1">Certificate approved</span>
+                  <span className="text-[10px] text-gray-300">15m ago</span>
+                </div>
+                <div className="flex items-center gap-2 py-1.5">
+                  <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div></div>
+                  <span className="text-[11px] text-gray-500 flex-1">New patient registered</span>
+                  <span className="text-[10px] text-gray-300">1h ago</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
