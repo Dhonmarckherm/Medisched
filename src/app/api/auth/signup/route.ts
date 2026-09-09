@@ -50,11 +50,21 @@ export async function POST(request: NextRequest) {
       password,
     });
 
-    if (authError && !authError.message.includes("already been registered")) {
-      return NextResponse.json(
-        { error: authError.message },
-        { status: 400 }
-      );
+    if (authError) {
+      // Handle rate limit error
+      if (authError.message.includes("rate limit") || authError.message.includes("over_email_send_rate_limit")) {
+        return NextResponse.json(
+          { error: "Too many signup attempts. Please wait a moment and try again." },
+          { status: 429 }
+        );
+      }
+      // Ignore "already registered" error if user exists in auth
+      if (!authError.message.includes("already been registered")) {
+        return NextResponse.json(
+          { error: authError.message },
+          { status: 400 }
+        );
+      }
     }
 
     // Create user in our database (using service client to bypass RLS)
