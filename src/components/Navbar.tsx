@@ -249,10 +249,12 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="relative">
               <button
                 onClick={() => { setNotifOpen(!notifOpen); }}
-                className="relative text-gray-500 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
+                className={`relative bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
+                  notifOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
+                }`}
                 style={{ minWidth: 44, minHeight: 44 }}
               >
-                {notifOpen ? <XIcon size={20} /> : <BellIcon size={20} />}
+                {notifOpen ? <XIcon size={24} className="text-gray-900" /> : <BellIcon size={22} />}
                 {!notifOpen && pendingCount > 0 && (
                   <span className="absolute top-1 right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
                     {pendingCount > 99 ? "99+" : pendingCount}
@@ -262,11 +264,13 @@ export default function Navbar({ user }: NavbarProps) {
             </div>
           )}
           <button
-            className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
+            className={`lg:hidden bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
+              mobileOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
+            }`}
             onClick={() => setMobileOpen(!mobileOpen)}
             style={{ minWidth: 44, minHeight: 44 }}
           >
-            {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
+            {mobileOpen ? <XIcon size={24} className="text-gray-900" /> : <MenuIcon size={24} />}
           </button>
         </div>
       </div>
