@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS public.accommodations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     available_from DATE NOT NULL,
     available_to DATE NOT NULL,
+    open_time TIME,
+    close_time TIME,
     status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -7,10 +7,17 @@ import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
 import { CalendarIcon, ClockIcon } from "@/components/Icons";
 
+function formatTime(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 export default function SchedulePage() {
   const [user, setUser] = useState<any>(null);
   const [accommodation, setAccommodation] = useState<any>(null);
-  const [formData, setFormData] = useState({ available_from: "", available_to: "" });
+  const [formData, setFormData] = useState({ available_from: "", available_to: "", open_time: "", close_time: "" });
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const { addToast } = useToast();
@@ -36,7 +43,11 @@ export default function SchedulePage() {
 
     await supabase.from("accommodations").update({ status: "inactive" }).eq("status", "active");
     const { error: insertError } = await supabase.from("accommodations").insert({
-      available_from: formData.available_from, available_to: formData.available_to, status: "active",
+      available_from: formData.available_from,
+      available_to: formData.available_to,
+      open_time: formData.open_time || null,
+      close_time: formData.close_time || null,
+      status: "active",
     });
 
     if (insertError) { addToast("error", "Failed to save schedule"); return; }
@@ -71,7 +82,7 @@ export default function SchedulePage() {
         <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
           <h2 className="text-[16px] font-semibold text-[#1a1a2e] mb-4">Current Schedule</h2>
           {accommodation ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
                   <CalendarIcon size={20} />
@@ -88,6 +99,19 @@ export default function SchedulePage() {
                 <div>
                   <p className="text-[12px] text-gray-400 m-0">Available To</p>
                   <p className="text-[14px] font-medium text-gray-700 m-0">{new Date(accommodation.available_to).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500">
+                  <ClockIcon size={20} />
+                </div>
+                <div>
+                  <p className="text-[12px] text-gray-400 m-0">Clinic Hours</p>
+                  <p className="text-[14px] font-medium text-gray-700 m-0">
+                    {accommodation.open_time && accommodation.close_time
+                      ? `${formatTime(accommodation.open_time)} — ${formatTime(accommodation.close_time)}`
+                      : "Not set"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -110,7 +134,7 @@ export default function SchedulePage() {
           <div className="bg-white rounded-xl border border-gray-100 p-6">
             <h2 className="text-[16px] font-semibold text-[#1a1a2e] mb-6">Set New Schedule</h2>
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="text-[13px] font-medium text-gray-500 mb-1.5 block">Available From</label>
                   <input type="date" value={formData.available_from} onChange={(e) => setFormData({ ...formData, available_from: e.target.value })} required
@@ -119,6 +143,18 @@ export default function SchedulePage() {
                 <div>
                   <label className="text-[13px] font-medium text-gray-500 mb-1.5 block">Available To</label>
                   <input type="date" value={formData.available_to} onChange={(e) => setFormData({ ...formData, available_to: e.target.value })} required
+                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[13px] font-medium text-gray-500 mb-1.5 block">Open Time</label>
+                  <input type="time" value={formData.open_time} onChange={(e) => setFormData({ ...formData, open_time: e.target.value })}
+                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" />
+                </div>
+                <div>
+                  <label className="text-[13px] font-medium text-gray-500 mb-1.5 block">Close Time</label>
+                  <input type="time" value={formData.close_time} onChange={(e) => setFormData({ ...formData, close_time: e.target.value })}
                     className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" />
                 </div>
               </div>
