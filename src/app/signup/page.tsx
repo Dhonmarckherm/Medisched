@@ -7,16 +7,10 @@ import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon }
 import { useToast } from "@/components/Toast";
 
 const COURSES = [
-  "BS Nursing",
-  "BS Midwifery",
-  "BS Medical Technology",
-  "BS Pharmacy",
-  "BS Physical Therapy",
-  "BS Radiologic Technology",
-  "BS Respiratory Therapy",
-  "BS Occupational Therapy",
-  "BS Speech-Language Pathology",
-  "Other",
+  "BSHM",
+  "BSTM",
+  "BSED",
+  "BSIT",
 ];
 
 const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
