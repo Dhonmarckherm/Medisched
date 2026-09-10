@@ -41,13 +41,19 @@ export default function Navbar({ user }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [avatarOpen]);
 
-  // Cache student user_id to avoid repeated lookups
+  // Get student user_id - use user.id directly if available, otherwise lookup
   const [studentId, setStudentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || isAdminOrNurse) return;
-    supabase.from("users").select("id").eq("auth_id", user.id).single()
-      .then(({ data }: { data: { id: string } | null }) => { if (data) setStudentId(data.id); });
+    // user.id is the database id from the users table
+    if (user.id) {
+      setStudentId(user.id);
+      return;
+    }
+    // Fallback: lookup by auth_id
+    supabase.from("users").select("id").eq("auth_id", user.id).limit(1)
+      .then(({ data }: { data: { id: string }[] | null }) => { if (data && data.length > 0) setStudentId(data[0].id); });
   }, [user, isAdminOrNurse, supabase]);
 
   // Fetch notification counts + realtime subscription
