@@ -4,12 +4,17 @@ import { useState, useMemo } from "react";
 import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
+import { DownloadIcon } from "@/components/Icons";
+import { generateCertificatePDF } from "@/lib/pdf-generator";
 
 interface Certificate {
   id: string;
   firstname: string;
   lastname: string;
+  middlename?: string;
   student_id: string;
+  course?: string;
+  year_level?: string;
   purpose: string;
   date_needed: string;
   status: string;
@@ -109,6 +114,7 @@ export default function CertificatesListClient({ certificates, isAdminOrNurse }:
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Date Needed</th>
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Created</th>
+                  <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,6 +126,17 @@ export default function CertificatesListClient({ certificates, isAdminOrNurse }:
                     <td className="py-3 px-4 text-[14px] text-gray-500">{new Date(cert.date_needed).toLocaleDateString()}</td>
                     <td className="py-3 px-4"><StatusBadge status={cert.status} /></td>
                     <td className="py-3 px-4 text-[14px] text-gray-400">{new Date(cert.created_at).toLocaleDateString()}</td>
+                    <td className="py-3 px-4">
+                      {cert.status === "Approved" && (
+                        <button
+                          onClick={() => generateCertificatePDF(cert)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-primary/20 transition"
+                          title="Download PDF"
+                        >
+                          <DownloadIcon size={14} /> PDF
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

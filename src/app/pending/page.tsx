@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { useToast } from "@/components/Toast";
-import { CheckCircleIcon, XCircleIcon, CalendarIcon, CertificateIcon } from "@/components/Icons";
+import { CheckCircleIcon, XCircleIcon, CalendarIcon, CertificateIcon, CheckSquareIcon } from "@/components/Icons";
 
 export default function PendingListPage() {
   const [user, setUser] = useState<any>(null);
@@ -15,6 +15,9 @@ export default function PendingListPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"appointments" | "certificates">("appointments");
+  const [selectedApptIds, setSelectedApptIds] = useState<Set<string>>(new Set());
+  const [selectedCertIds, setSelectedCertIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -57,6 +60,65 @@ export default function PendingListPage() {
       setPendingCerts((prev) => prev.filter((c) => c.id !== id));
     }
     addToast("success", `${type === "appointment" ? "Appointment" : "Certificate"} ${action.toLowerCase()} successfully`);
+  };
+
+  const toggleApptSelect = (id: string) => {
+    setSelectedApptIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCertSelect = (id: string) => {
+    setSelectedCertIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllAppts = () => {
+    if (selectedApptIds.size === filteredAppts.length) {
+      setSelectedApptIds(new Set());
+    } else {
+      setSelectedApptIds(new Set(filteredAppts.map((a) => a.id)));
+    }
+  };
+
+  const toggleAllCerts = () => {
+    if (selectedCertIds.size === filteredCerts.length) {
+      setSelectedCertIds(new Set());
+    } else {
+      setSelectedCertIds(new Set(filteredCerts.map((c) => c.id)));
+    }
+  };
+
+  const handleBulkAction = async (action: "Approved" | "Rejected") => {
+    const ids = tab === "appointments" ? [...selectedApptIds] : [...selectedCertIds];
+    if (ids.length === 0) return;
+    setBulkLoading(true);
+
+    const table = tab === "appointments" ? "appointments" : "certificates";
+    const { error } = await supabase.from(table)
+      .update({ status: action })
+      .in("id", ids);
+
+    if (error) {
+      addToast("error", `Failed to ${action === "Approved" ? "approve" : "reject"} items`);
+      setBulkLoading(false);
+      return;
+    }
+
+    if (tab === "appointments") {
+      setPendingAppts((prev) => prev.filter((a) => !selectedApptIds.has(a.id)));
+      setSelectedApptIds(new Set());
+    } else {
+      setPendingCerts((prev) => prev.filter((c) => !selectedCertIds.has(c.id)));
+      setSelectedCertIds(new Set());
+    }
+    addToast("success", `${ids.length} ${tab} ${action.toLowerCase()} successfully`);
+    setBulkLoading(false);
   };
 
   const filteredAppts = useMemo(() => {
@@ -130,6 +192,27 @@ export default function PendingListPage() {
           </button>
         </div>
 
+        {/* Bulk Action Bar */}
+        {isAdminOrNurse && (
+          (tab === "appointments" && selectedApptIds.size > 0) || (tab === "certificates" && selectedCertIds.size > 0)
+        ) && (
+          <div className="bg-primary/5 border border-primary/20 rounded-xl px-5 py-3 mb-4 flex items-center justify-between animate-scale-in">
+            <p className="text-[13px] text-gray-600 font-medium">
+              <span className="text-primary font-bold">{tab === "appointments" ? selectedApptIds.size : selectedCertIds.size}</span> item{((tab === "appointments" ? selectedApptIds.size : selectedCertIds.size) > 1) ? "s" : ""} selected
+            </p>
+            <div className="flex gap-2">
+              <button onClick={() => handleBulkAction("Approved")} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 text-white rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-600 transition disabled:opacity-50">
+                <CheckCircleIcon size={14} /> Approve All
+              </button>
+              <button onClick={() => handleBulkAction("Rejected")} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-4 py-2 bg-red-500 text-white rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-600 transition disabled:opacity-50">
+                <XCircleIcon size={14} /> Reject All
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         {tab === "appointments" ? (
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -155,7 +238,13 @@ export default function PendingListPage() {
                   </thead>
                   <tbody>
                     {filteredAppts.map((appt) => (
-                      <tr key={appt.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                      <tr key={appt.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition ${selectedApptIds.has(appt.id) ? "bg-primary/5" : ""}`}>
+                        {isAdminOrNurse && (
+                          <td className="py-3 px-4">
+                            <input type="checkbox" checked={selectedApptIds.has(appt.id)} onChange={() => toggleApptSelect(appt.id)}
+                              className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer" />
+                          </td>
+                        )}
                         <td className="py-3 px-4 text-[14px] text-gray-700">{appt.firstname} {appt.lastname}</td>
                         <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{appt.student_id || "N/A"}</td>
                         <td className="py-3 px-4 text-[14px] text-gray-500 hidden md:table-cell">{new Date(appt.appointment_date).toLocaleDateString()}</td>
@@ -198,6 +287,12 @@ export default function PendingListPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100">
+                      {isAdminOrNurse && (
+                        <th className="py-3 px-4 w-10">
+                          <input type="checkbox" checked={selectedCertIds.size === filteredCerts.length && filteredCerts.length > 0} onChange={toggleAllCerts}
+                            className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer" />
+                        </th>
+                      )}
                       <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
                       <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Student ID</th>
                       <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date Needed</th>
@@ -208,7 +303,13 @@ export default function PendingListPage() {
                   </thead>
                   <tbody>
                     {filteredCerts.map((cert) => (
-                      <tr key={cert.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                      <tr key={cert.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition ${selectedCertIds.has(cert.id) ? "bg-primary/5" : ""}`}>
+                        {isAdminOrNurse && (
+                          <td className="py-3 px-4">
+                            <input type="checkbox" checked={selectedCertIds.has(cert.id)} onChange={() => toggleCertSelect(cert.id)}
+                              className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer" />
+                          </td>
+                        )}
                         <td className="py-3 px-4 text-[14px] text-gray-700">{cert.firstname} {cert.lastname}</td>
                         <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{cert.student_id || "N/A"}</td>
                         <td className="py-3 px-4 text-[14px] text-gray-500 hidden md:table-cell">{new Date(cert.date_needed).toLocaleDateString()}</td>
