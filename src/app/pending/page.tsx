@@ -29,8 +29,8 @@ export default function PendingListPage() {
 
     const isAdminOrNurse = dbUser?.role === "admin" || dbUser?.role === "nurse";
 
-    let apptQ = supabase.from("appointments").select("*").eq("status", "Pending").order("created_at", { ascending: false });
-    let certQ = supabase.from("certificates").select("*").eq("status", "Pending").order("created_at", { ascending: false });
+    let apptQ = supabase.from("appointments").select("*, users(email)").eq("status", "Pending").order("created_at", { ascending: false });
+    let certQ = supabase.from("certificates").select("*, users(email)").eq("status", "Pending").order("created_at", { ascending: false });
 
     if (!isAdminOrNurse) {
       apptQ = apptQ.eq("user_id", dbUser.id);
@@ -45,13 +45,32 @@ export default function PendingListPage() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const sendEmail = async (email: string, name: string, type: "appointment" | "certificate", status: "Approved" | "Rejected", details?: Record<string, string>) => {
+    try {
+      await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "status", to: email, name, status, details: { requestType: type, ...details } }),
+      });
+    } catch { /* email is non-critical, don't block UI */ }
+  };
+
   const handleAction = async (id: string, type: "appointment" | "certificate", action: "Approved" | "Rejected") => {
     const table = type === "appointment" ? "appointments" : "certificates";
+    const item = [...pendingAppts, ...pendingCerts].find((i) => i.id === id);
     const { error } = await supabase.from(table).update({ status: action }).eq("id", id);
 
     if (error) {
       addToast("error", `Failed to ${action === "Approved" ? "approve" : "reject"} item`);
       return;
+    }
+
+    // Send email notification
+    if (item?.email || item?.users?.email) {
+      const email = item.email || item.users?.email;
+      const name = `${item.firstname} ${item.lastname}`;
+      const date = type === "appointment" ? item.appointment_date : item.date_needed;
+      await sendEmail(email, name, type, action, { date, purpose: item.purpose });
     }
 
     if (type === "appointment") {
@@ -100,6 +119,10 @@ export default function PendingListPage() {
     setBulkLoading(true);
 
     const table = tab === "appointments" ? "appointments" : "certificates";
+    const items = tab === "appointments"
+      ? pendingAppts.filter((a) => selectedApptIds.has(a.id))
+      : pendingCerts.filter((c) => selectedCertIds.has(c.id));
+
     const { error } = await supabase.from(table)
       .update({ status: action })
       .in("id", ids);
@@ -108,6 +131,16 @@ export default function PendingListPage() {
       addToast("error", `Failed to ${action === "Approved" ? "approve" : "reject"} items`);
       setBulkLoading(false);
       return;
+    }
+
+    // Send emails for each item
+    for (const item of items) {
+      const email = item.email || item.users?.email;
+      if (email) {
+        const name = `${item.firstname} ${item.lastname}`;
+        const date = tab === "appointments" ? item.appointment_date : item.date_needed;
+        await sendEmail(email, name, tab === "appointments" ? "appointment" : "certificate", action, { date, purpose: item.purpose });
+      }
     }
 
     if (tab === "appointments") {
