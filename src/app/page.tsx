@@ -61,14 +61,16 @@ export default async function HomePage() {
               health certificate requests, and real-time status tracking — all
               in one modern platform.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 bg-primary text-white rounded-xl font-medium text-[15px] no-underline hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all">
-                Get Started Free <ArrowRightIcon size={16} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link href="/login" className="inline-flex items-center gap-2 px-7 py-3.5 border-2 border-gray-200 text-gray-700 rounded-xl font-medium text-[15px] no-underline hover:border-primary hover:text-primary transition-all">
-                Sign In
-              </Link>
-            </div>
+            {!dbUser && (
+              <div className="flex flex-wrap gap-4">
+                <Link href="/signup" className="group inline-flex items-center gap-2 px-7 py-3.5 bg-primary text-white rounded-xl font-medium text-[15px] no-underline hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all">
+                  Get Started Free <ArrowRightIcon size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/login" className="inline-flex items-center gap-2 px-7 py-3.5 border-2 border-gray-200 text-gray-700 rounded-xl font-medium text-[15px] no-underline hover:border-primary hover:text-primary transition-all">
+                  Sign In
+                </Link>
+              </div>
+            )}
             {/* Trust indicators */}
             <div className="flex items-center gap-6 mt-10 pt-8 border-t border-gray-100">
               <div>
@@ -222,14 +224,16 @@ export default async function HomePage() {
               <p className="text-white/80 text-[16px] mb-8 max-w-[400px] mx-auto">
                 Join hundreds of students already using MEDISCHED CERT for their clinic needs.
               </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/signup" className="inline-flex items-center gap-2 bg-white text-primary px-8 py-3.5 rounded-xl font-semibold text-[15px] no-underline hover:bg-white/90 transition shadow-lg">
-                  Create Account <ArrowRightIcon size={16} />
-                </Link>
-                <Link href="/login" className="inline-flex items-center gap-2 bg-white/15 text-white px-8 py-3.5 rounded-xl font-semibold text-[15px] no-underline hover:bg-white/25 transition border border-white/20">
-                  Sign In
-                </Link>
-              </div>
+              {!dbUser && (
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Link href="/signup" className="inline-flex items-center gap-2 bg-white text-primary px-8 py-3.5 rounded-xl font-semibold text-[15px] no-underline hover:bg-white/90 transition shadow-lg">
+                    Create Account <ArrowRightIcon size={16} />
+                  </Link>
+                  <Link href="/login" className="inline-flex items-center gap-2 bg-white/15 text-white px-8 py-3.5 rounded-xl font-semibold text-[15px] no-underline hover:bg-white/25 transition border border-white/20">
+                    Sign In
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
