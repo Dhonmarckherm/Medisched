@@ -8,9 +8,33 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 const FROM = `"${process.env.SMTP_FROM_NAME || "MEDISCHED CERT"}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`;
+
+/* ── Plain text fallback (prevents spam flag for HTML-only) ── */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
 /* ── HTML Templates ── */
 
@@ -123,11 +147,19 @@ If you have questions, please visit the clinic or contact the admin.
 
 export async function sendWelcomeEmail(to: string, name: string) {
   try {
+    const html = welcomeEmail(name);
     await transporter.sendMail({
       from: FROM,
       to,
       subject: "Welcome to MEDISCHED CERT",
-      html: welcomeEmail(name),
+      html,
+      text: htmlToText(html),
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        "MIME-Version": "1.0",
+        "Content-Type": "multipart/alternative; boundary=\"boundary\"",
+      },
     });
     return true;
   } catch (err) {
@@ -144,11 +176,19 @@ export async function sendStatusNotification(
   details: { date?: string; purpose?: string } = {}
 ) {
   try {
+    const html = statusEmail(name, type, status, details);
     await transporter.sendMail({
       from: FROM,
       to,
       subject: `${type === "appointment" ? "Appointment" : "Certificate"} ${status} — MEDISCHED CERT`,
-      html: statusEmail(name, type, status, details),
+      html,
+      text: htmlToText(html),
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        "MIME-Version": "1.0",
+        "Content-Type": "multipart/alternative; boundary=\"boundary\"",
+      },
     });
     return true;
   } catch (err) {
