@@ -327,7 +327,7 @@ export default function Navbar({ user }: NavbarProps) {
 
       {/* Mobile Side Drawer */}
       {mounted && mobileOpen && (
-        <div suppressHydrationWarning className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
+        <div suppressHydrationWarning className="fixed top-0 left-0 right-0 bottom-0 z-[1300] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right flex flex-col">
 
