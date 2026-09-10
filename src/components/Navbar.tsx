@@ -41,7 +41,7 @@ export default function Navbar({ user }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [avatarOpen]);
 
-  // Fetch notification counts
+  // Fetch notification counts + realtime subscription
   useEffect(() => {
     if (!user) return;
 
@@ -69,8 +69,15 @@ export default function Navbar({ user }: NavbarProps) {
     }
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+
+    // Subscribe to realtime changes for instant updates
+    const channel = supabase
+      .channel("navbar-notifs")
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => fetchNotifications())
+      .on("postgres_changes", { event: "*", schema: "public", table: "certificates" }, () => fetchNotifications())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user, isAdminOrNurse, supabase]);
 
   const handleLogout = async () => {
