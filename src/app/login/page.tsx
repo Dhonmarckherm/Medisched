@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
@@ -72,9 +71,9 @@ function LoginForm() {
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
       {/* Back to Home */}
-      <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+      <a href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
         <ArrowLeftIcon size={14} /> Back to Home
-      </Link>
+      </a>
 
       {/* Left Panel */}
       <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
@@ -126,9 +125,9 @@ function LoginForm() {
             <label className="flex items-center gap-2 text-gray-500">
               <input type="checkbox" className="accent-primary rounded" /> Remember me
             </label>
-            <Link href="/forgot-password" className="text-primary no-underline font-medium">
+            <a href="/forgot-password" className="text-primary no-underline font-medium">
               Forgot password?
-            </Link>
+            </a>
           </div>
 
           <button type="submit" disabled={loading}
@@ -138,7 +137,7 @@ function LoginForm() {
 
           <p className="mt-5 text-center text-[13px] text-gray-400">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary no-underline font-medium">Sign Up</Link>
+            <a href="/signup" className="text-primary no-underline font-medium">Sign Up</a>
           </p>
         </form>
       </div>
