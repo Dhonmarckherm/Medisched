@@ -26,7 +26,7 @@ export default async function AppointmentsListPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-[30px] font-bold text-[#222]">Appointments</h1>
           {!isAdminOrNurse && (
-            <Link href="/appointments/new" className="bg-primary text-white rounded-full px-8 py-3 font-semibold no-underline hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-lg transition">
+            <Link href="/appointments/new" className="bg-primary text-white rounded-lg px-4 py-1.5 text-[13px] font-medium no-underline hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-lg transition">
               + New Request
             </Link>
           )}
