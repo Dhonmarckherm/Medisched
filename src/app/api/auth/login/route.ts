@@ -17,17 +17,27 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = createServiceClient();
 
-    // Find user in our database (service client bypasses RLS)
-    const { data: user, error } = await supabaseAdmin
+    // First check if email exists
+    const { data: emailUsers, error: emailError } = await supabaseAdmin
       .from("users")
-      .select("*")
+      .select("id, email, id_number, password_hash, active_status, first_name, last_name, role, auth_id")
       .eq("email", email)
-      .eq("id_number", id_number)
-      .single();
+      .limit(1);
 
-    debug.push(`User found: ${!!user}, Error: ${error?.message || "none"}`);
+    debug.push(`Email check error: ${emailError?.message || "none"}`);
+    debug.push(`Email found: ${emailUsers?.length || 0} users`);
 
-    if (error || !user) {
+    if (emailError || !emailUsers || emailUsers.length === 0) {
+      return NextResponse.json({ error: "Invalid credentials", debug }, { status: 401 });
+    }
+
+    const user = emailUsers[0];
+    debug.push(`User ID: ${user.id}, ID Number: ${user.id_number}`);
+    debug.push(`Entered ID: ${id_number}`);
+    debug.push(`ID match: ${user.id_number === id_number}`);
+
+    // Check if id_number matches
+    if (user.id_number !== id_number) {
       return NextResponse.json({ error: "Invalid credentials", debug }, { status: 401 });
     }
 
