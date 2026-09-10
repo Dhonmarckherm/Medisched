@@ -1,8 +1,16 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: process.env.SMTP_SECURE === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-const FROM_ADDRESS = "MEDISCHED CERT <onboarding@resend.dev>";
+const FROM = `"${process.env.SMTP_FROM_NAME || "MEDISCHED CERT"}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`;
 
 /* ── HTML Templates ── */
 
@@ -115,14 +123,13 @@ If you have questions, please visit the clinic or contact the admin.
 
 export async function sendWelcomeEmail(to: string, name: string) {
   try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
+    await transporter.sendMail({
+      from: FROM,
       to,
       subject: "Welcome to MEDISCHED CERT",
       html: welcomeEmail(name),
     });
-    if (error) console.error("Resend welcome error:", error);
-    return !error;
+    return true;
   } catch (err) {
     console.error("Failed to send welcome email:", err);
     return false;
@@ -137,14 +144,13 @@ export async function sendStatusNotification(
   details: { date?: string; purpose?: string } = {}
 ) {
   try {
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
+    await transporter.sendMail({
+      from: FROM,
       to,
       subject: `${type === "appointment" ? "Appointment" : "Certificate"} ${status} — MEDISCHED CERT`,
       html: statusEmail(name, type, status, details),
     });
-    if (error) console.error("Resend status error:", error);
-    return !error;
+    return true;
   } catch (err) {
     console.error("Failed to send status email:", err);
     return false;
