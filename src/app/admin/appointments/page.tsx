@@ -18,6 +18,7 @@ export default function ManageAppointmentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -34,9 +35,10 @@ export default function ManageAppointmentsPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+    setActionLoadingId(id);
     const appt = appointments.find((a) => a.id === id);
     const { error } = await supabase.from("appointments").update({ status: action }).eq("id", id);
-    if (error) { addToast("error", "Failed to update"); return; }
+    if (error) { addToast("error", "Failed to update"); setActionLoadingId(null); return; }
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: action } : a)));
     addToast("success", `Appointment ${action.toLowerCase()} successfully`);
 
@@ -57,6 +59,7 @@ export default function ManageAppointmentsPage() {
         });
       } catch { /* non-critical */ }
     }
+    setActionLoadingId(null);
   };
 
   const filtered = useMemo(() => {
@@ -151,12 +154,12 @@ export default function ManageAppointmentsPage() {
                       <td className="py-3 px-4">
                         {appt.status === "Pending" && (
                           <div className="flex gap-1.5">
-                            <button onClick={() => handleAction(appt.id, "Approved")}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition">
-                              <CheckCircleIcon size={14} /> Approve
+                            <button onClick={() => handleAction(appt.id, "Approved")} disabled={actionLoadingId === appt.id}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                              {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === appt.id ? "Approving..." : "Approve"}
                             </button>
-                            <button onClick={() => handleAction(appt.id, "Rejected")}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition">
+                            <button onClick={() => handleAction(appt.id, "Rejected")} disabled={actionLoadingId === appt.id}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
                               <XCircleIcon size={14} /> Reject
                             </button>
                           </div>
@@ -172,6 +175,7 @@ export default function ManageAppointmentsPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </main>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

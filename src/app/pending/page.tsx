@@ -18,6 +18,7 @@ export default function PendingListPage() {
   const [selectedApptIds, setSelectedApptIds] = useState<Set<string>>(new Set());
   const [selectedCertIds, setSelectedCertIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -56,12 +57,14 @@ export default function PendingListPage() {
   };
 
   const handleAction = async (id: string, type: "appointment" | "certificate", action: "Approved" | "Rejected") => {
+    setActionLoadingId(id);
     const table = type === "appointment" ? "appointments" : "certificates";
     const item = [...pendingAppts, ...pendingCerts].find((i) => i.id === id);
     const { error } = await supabase.from(table).update({ status: action }).eq("id", id);
 
     if (error) {
       addToast("error", `Failed to ${action === "Approved" ? "approve" : "reject"} item`);
+      setActionLoadingId(null);
       return;
     }
 
@@ -79,6 +82,7 @@ export default function PendingListPage() {
       setPendingCerts((prev) => prev.filter((c) => c.id !== id));
     }
     addToast("success", `${type === "appointment" ? "Appointment" : "Certificate"} ${action.toLowerCase()} successfully`);
+    setActionLoadingId(null);
   };
 
   const toggleApptSelect = (id: string) => {
@@ -286,13 +290,13 @@ export default function PendingListPage() {
                         {isAdminOrNurse && (
                           <td className="py-3 px-4">
                             <div className="flex gap-1.5">
-                              <button onClick={() => handleAction(appt.id, "appointment", "Approved")}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition"
+                              <button onClick={() => handleAction(appt.id, "appointment", "Approved")} disabled={actionLoadingId === appt.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Approve">
-                                <CheckCircleIcon size={14} /> Approve
+                                {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === appt.id ? "Approving..." : "Approve"}
                               </button>
-                              <button onClick={() => handleAction(appt.id, "appointment", "Rejected")}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition"
+                              <button onClick={() => handleAction(appt.id, "appointment", "Rejected")} disabled={actionLoadingId === appt.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Reject">
                                 <XCircleIcon size={14} /> Reject
                               </button>
@@ -351,12 +355,12 @@ export default function PendingListPage() {
                         {isAdminOrNurse && (
                           <td className="py-3 px-4">
                             <div className="flex gap-1.5">
-                              <button onClick={() => handleAction(cert.id, "certificate", "Approved")}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition">
-                                <CheckCircleIcon size={14} /> Approve
+                              <button onClick={() => handleAction(cert.id, "certificate", "Approved")} disabled={actionLoadingId === cert.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === cert.id ? "Approving..." : "Approve"}
                               </button>
-                              <button onClick={() => handleAction(cert.id, "certificate", "Rejected")}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition">
+                              <button onClick={() => handleAction(cert.id, "certificate", "Rejected")} disabled={actionLoadingId === cert.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                 <XCircleIcon size={14} /> Reject
                               </button>
                             </div>
@@ -371,6 +375,7 @@ export default function PendingListPage() {
           </div>
         )}
       </main>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
