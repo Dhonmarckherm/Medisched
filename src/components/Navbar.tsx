@@ -143,27 +143,44 @@ export default function Navbar({ user }: NavbarProps) {
                 {notifOpen && (
                   <>
                     <div className="fixed inset-0 z-[998]" onClick={() => setNotifOpen(false)} />
-                    <div className="absolute right-0 top-[calc(100% + 6px)] w-[320px] bg-white/95 backdrop-blur-xl rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] z-[999] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
-                      <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                        <h3 className="text-[14px] font-semibold text-[#1a1a2e] m-0">Notifications</h3>
-                        <p className="text-[12px] text-gray-400 mt-0.5 mb-0">
-                          {isAdminOrNurse ? "Items requiring attention" : "Updates on your requests"}
-                        </p>
+                    <div className="absolute right-0 top-[calc(100% + 8px)] w-[340px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] z-[999] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+                      {/* Header */}
+                      <div className="px-4 py-3.5 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                        <div>
+                          <h3 className="text-[14px] font-semibold text-[#111] m-0 leading-tight">Notifications</h3>
+                          <p className="text-[12px] text-gray-400 mt-0.5 mb-0 font-normal">
+                            {isAdminOrNurse ? "Items needing your review" : "Updates on your requests"}
+                          </p>
+                        </div>
+                        {pendingCount > 0 && (
+                          <span className="bg-red-50 text-red-600 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                            {pendingCount}
+                          </span>
+                        )}
                       </div>
-                      <div className="max-h-[280px] overflow-y-auto">
+                      {/* Body */}
+                      <div className="max-h-[300px] overflow-y-auto">
                         {pendingCount === 0 ? (
-                          <div className="py-8 text-center text-gray-400 text-[13px]">
-                            {isAdminOrNurse ? "All caught up" : "No new updates"}
+                          <div className="py-10 flex flex-col items-center">
+                            <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
+                              <BellIcon size={20} className="text-gray-300" />
+                            </div>
+                            <p className="text-[13px] font-medium text-gray-500 m-0">
+                              {isAdminOrNurse ? "All caught up" : "No new updates"}
+                            </p>
+                            <p className="text-[12px] text-gray-300 mt-0.5 m-0">
+                              {isAdminOrNurse ? "Nothing pending right now" : "We'll notify you here"}
+                            </p>
                           </div>
                         ) : isAdminOrNurse ? (
                           <>
-                            <PendingNotifItem supabase={supabase} table="appointments" label="Pending Appointments" href="/pending" onClick={() => setNotifOpen(false)} />
-                            <PendingNotifItem supabase={supabase} table="certificates" label="Pending Certificates" href="/pending" onClick={() => setNotifOpen(false)} />
+                            <PendingNotifItem supabase={supabase} table="appointments" label="Pending Appointments" description="Awaiting your decision" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/pending" onClick={() => setNotifOpen(false)} />
+                            <PendingNotifItem supabase={supabase} table="certificates" label="Pending Certificates" description="Ready for review" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/pending" onClick={() => setNotifOpen(false)} />
                           </>
                         ) : (
                           <>
-                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Updates" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
-                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Updates" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Updates" description="Status changed" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Updates" description="Status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
                           </>
                         )}
                       </div>
@@ -357,8 +374,8 @@ function NavLink({ href, pathname, children }: { href: string; pathname: string;
 }
 
 /* ── Notification item ── */
-function PendingNotifItem({ supabase, table, label, href, onClick, statusFilter }: {
-  supabase: any; table: string; label: string; href: string; onClick: () => void; statusFilter?: string[];
+function PendingNotifItem({ supabase, table, label, description, icon, iconBg, iconColor, href, onClick, statusFilter }: {
+  supabase: any; table: string; label: string; description: string; icon: React.ReactNode; iconBg: string; iconColor: string; href: string; onClick: () => void; statusFilter?: string[];
 }) {
   const [count, setCount] = useState(0);
 
@@ -376,12 +393,15 @@ function PendingNotifItem({ supabase, table, label, href, onClick, statusFilter 
 
   return (
     <Link href={href} onClick={onClick}
-      className="flex items-center justify-between px-4 py-3 hover:bg-black/[0.02] no-underline transition-colors" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-      <div>
-        <p className="text-[13px] font-medium text-gray-700 m-0">{label}</p>
-        <p className="text-[11px] text-gray-400 mt-0.5 m-0">Needs review</p>
+      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/80 no-underline transition-colors group" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+      <div className={`w-9 h-9 rounded-[10px] ${iconBg} flex items-center justify-center flex-shrink-0 ${iconColor}`}>
+        {icon}
       </div>
-      <span className="min-w-[22px] h-[22px] bg-amber-50 text-amber-600 text-[11px] font-semibold rounded-full flex items-center justify-center px-1">
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-semibold text-[#111] m-0 leading-tight">{label}</p>
+        <p className="text-[12px] text-gray-400 mt-0.5 m-0 leading-tight">{description}</p>
+      </div>
+      <span className="min-w-[22px] h-[22px] bg-amber-50 text-amber-700 text-[11px] font-bold rounded-full flex items-center justify-center px-1.5">
         {count}
       </span>
     </Link>
