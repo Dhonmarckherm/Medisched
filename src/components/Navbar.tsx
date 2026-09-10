@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon } from "@/components/Icons";
 
@@ -27,6 +26,9 @@ export default function Navbar({ user }: NavbarProps) {
   const [pendingCount, setPendingCount] = useState(0);
   const [logoutModal, setLogoutModal] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   // Close avatar dropdown on outside click
   useEffect(() => {
@@ -82,6 +84,7 @@ export default function Navbar({ user }: NavbarProps) {
   const initials = user ? `${user.first_name?.charAt(0) || ""}${user.last_name?.charAt(0) || ""}` : "";
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-[1000] h-[64px] flex items-center bg-white/80 backdrop-blur-xl" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
       <div className="w-[90%] max-w-[1200px] mx-auto flex items-center justify-between">
 
@@ -242,10 +245,11 @@ export default function Navbar({ user }: NavbarProps) {
           {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
         </button>
       </div>
+    </header>
 
-      {/* Mobile Side Drawer — rendered via portal to escape fixed header */}
-      {mobileOpen && typeof document !== "undefined" && createPortal(
-        <div className="fixed top-0 left-0 right-0 bottom-0 z-[999] lg:hidden">
+      {/* Mobile Side Drawer */}
+      {mounted && mobileOpen && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right flex flex-col">
 
@@ -325,13 +329,12 @@ export default function Navbar({ user }: NavbarProps) {
               )}
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
 
-      {/* Logout Modal — rendered via portal to escape fixed header */}
-      {logoutModal && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Logout Modal */}
+      {mounted && logoutModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setLogoutModal(false)} />
           <div className="relative bg-white rounded-2xl p-6 w-[90%] max-w-[360px] shadow-xl animate-scale-in">
             <div className="text-center">
@@ -352,10 +355,9 @@ export default function Navbar({ user }: NavbarProps) {
               </div>
             </div>
           </div>
-        </div>,
-        document.body
+        </div>
       )}
-    </header>
+    </>
   );
 }
 
