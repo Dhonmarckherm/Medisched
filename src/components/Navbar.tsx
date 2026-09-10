@@ -242,23 +242,15 @@ export default function Navbar({ user }: NavbarProps) {
                     <div className="text-[14px] font-semibold text-gray-800 truncate">{user.first_name} {user.last_name}</div>
                     <div className="text-[11px] text-gray-400 capitalize">{user.role}</div>
                   </div>
-                  <button onClick={() => setMobileOpen(false)} className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer p-1">
-                    <XIcon size={18} />
-                  </button>
                 </div>
               </div>
             ) : (
               <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                      <HospitalIcon className="text-white" size={18} />
-                    </div>
-                    <span className="text-[16px] font-bold text-gray-800">MEDISCHED <span className="text-primary">CERT</span></span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                    <HospitalIcon className="text-white" size={18} />
                   </div>
-                  <button onClick={() => setMobileOpen(false)} className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer p-1">
-                    <XIcon size={18} />
-                  </button>
+                  <span className="text-[16px] font-bold text-gray-800">MEDISCHED <span className="text-primary">CERT</span></span>
                 </div>
               </div>
             )}
