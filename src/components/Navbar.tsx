@@ -92,7 +92,7 @@ export default function Navbar({ user }: NavbarProps) {
 
   return (
     <>
-    <header className="fixed top-0 left-0 right-0 z-[1000] h-[64px] flex items-center bg-white/80 backdrop-blur-xl" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+    <header className="fixed top-0 left-0 right-0 z-[1200] h-[64px] flex items-center bg-white/80 backdrop-blur-xl" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
       <div className="w-[90%] max-w-[1200px] mx-auto flex items-center justify-between">
 
         {/* Logo */}
@@ -280,7 +280,7 @@ export default function Navbar({ user }: NavbarProps) {
       {mounted && notifOpen && (
         <div suppressHydrationWarning className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotifOpen(false)} />
-          <div className="absolute top-[64px] left-2 right-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+          <div className="absolute top-[68px] left-2 right-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
             {/* Header */}
             <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
               <div>
