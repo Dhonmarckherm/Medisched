@@ -51,10 +51,10 @@ export default async function HomePage() {
               <HospitalIcon size={16} />
               ISPSC Medical Clinic Portal
             </div>
-            <h1 className="text-[42px] lg:text-[60px] font-bold text-[#1a1a2e] leading-[1.1] mb-6 tracking-tight">
-              Medical Scheduling<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600">&amp; Certification</span><br />
-              Made Simple
+            <h1 className="text-[36px] lg:text-[50px] font-bold text-[#1a1a2e] leading-[1.1] mb-6 tracking-tight">
+              Medical Scheduling and<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600">Certification Request System</span><br />
+              <span className="text-[20px] lg:text-[26px] font-semibold text-gray-400">of Ilocos Sur Polytechnic State College – Candon Campus</span>
             </h1>
             <p className="text-[17px] leading-[28px] text-gray-500 max-w-[520px] mb-10">
               Streamline your clinic visits with easy appointment booking,
