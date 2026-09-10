@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   const debug: string[] = [];
@@ -26,44 +26,30 @@ export async function POST(request: NextRequest) {
 
     debug.push(`User: ${dbUser.first_name} (${dbUser.id})`);
 
-    // Generate recovery link using Supabase Admin API
+    // Use resetPasswordForEmail - Supabase's built-in method that handles the link correctly
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
-    debug.push(`App URL: ${appUrl}`);
+    const redirectTo = `${appUrl}/reset-password`;
+    debug.push(`Redirect to: ${redirectTo}`);
 
-    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${appUrl}/reset-password`,
-      },
+    // Use anon client for resetPasswordForEmail (it's designed for unauthenticated users)
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { error: resetError } = await anonClient.auth.resetPasswordForEmail(email, {
+      redirectTo,
     });
 
-    debug.push(`Link error: ${linkError?.message || "none"}`);
-    debug.push(`Link data: ${linkData ? JSON.stringify(Object.keys(linkData)) : "null"}`);
+    debug.push(`Reset email error: ${resetError?.message || "none"}`);
 
-    if (linkError || !linkData) {
-      return NextResponse.json({ error: "Failed to generate reset link", debug }, { status: 500 });
+    if (resetError) {
+      return NextResponse.json({ error: `Failed to send reset email: ${resetError.message}`, debug }, { status: 500 });
     }
 
-    // The action_link is the URL the user needs to visit
-    const resetUrl = linkData.properties?.action_link;
-    debug.push(`Reset URL: ${resetUrl ? "generated" : "MISSING"}`);
-
-    if (!resetUrl) {
-      debug.push(`Full linkData: ${JSON.stringify(linkData)}`);
-      return NextResponse.json({ error: "No action_link in response", debug }, { status: 500 });
-    }
-
-    // Send email via Gmail SMTP
-    debug.push(`Sending email to: ${email}`);
-    const sent = await sendPasswordResetEmail(email, dbUser.first_name, resetUrl);
-    debug.push(`Email sent: ${sent}`);
-
-    if (!sent) {
-      return NextResponse.json({ error: "Failed to send reset email", debug }, { status: 500 });
-    }
-
-    return NextResponse.json({ message: "Password reset email sent successfully!", debug });
+    debug.push(`Reset email sent successfully via Supabase`);
+    return NextResponse.json({ message: "Password reset email sent! Check your inbox.", debug });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     debug.push(`Unexpected error: ${errMsg}`);
