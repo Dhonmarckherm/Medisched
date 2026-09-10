@@ -1,24 +1,52 @@
-import { SkeletonTable } from "@/components/Skeleton";
-
 export default function AppointmentsLoading() {
   return (
-    <div className="min-h-screen bg-[#f8faf9]">
-      <div className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
-        {/* Header skeleton */}
-        <div className="mb-8">
-          <div className="h-8 bg-gray-200 rounded w-56 mb-3 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-72 animate-pulse"></div>
+    <div className="min-h-screen" style={{ background: "#f5f8fb" }}>
+      {/* Navbar placeholder */}
+      <div className="fixed top-0 left-0 right-0 h-[64px] bg-white border-b border-gray-100 z-50 flex items-center px-6">
+        <div className="w-[120px] h-[10px] bg-gray-100 rounded-full" />
+      </div>
+
+      <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
+        {/* Title + button skeleton */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="w-[180px] h-[28px] bg-gray-100 rounded-lg" />
+          <div className="w-[110px] h-[30px] bg-gray-100 rounded-lg" />
         </div>
 
-        {/* Search + Filter skeleton */}
-        <div className="flex gap-3 mb-6">
-          <div className="h-10 bg-gray-200 rounded w-64 animate-pulse"></div>
-          <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+        {/* Search bar skeleton */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex-1 h-[42px] bg-gray-100 rounded-lg" />
+          <div className="w-[140px] h-[42px] bg-gray-100 rounded-lg" />
         </div>
+
+        {/* Results count skeleton */}
+        <div className="w-[200px] h-[14px] bg-gray-100 rounded-full mb-3" />
 
         {/* Table skeleton */}
-        <SkeletonTable rows={8} cols={6} />
-      </div>
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {/* Header row */}
+          <div className="border-b border-gray-100 flex px-4 py-3 gap-4">
+            {[100, 80, 80, 70, 120, 70, 70].map((w, i) => (
+              <div key={i} className="h-[14px] bg-gray-100 rounded-full" style={{ width: w, minWidth: w, flexShrink: 0 }} />
+            ))}
+          </div>
+          {/* Data rows */}
+          {Array.from({ length: 5 }).map((_, rowIdx) => (
+            <div key={rowIdx} className="border-b border-gray-50 flex px-4 py-3 gap-4 items-center">
+              {[140, 80, 80, 70, 160, 60, 60].map((w, i) => (
+                <div key={i} className="h-[13px] bg-gray-50 rounded-full" style={{ width: w, minWidth: w, flexShrink: 0, animation: `pulse 1.5s ease-in-out infinite`, animationDelay: `${rowIdx * 0.1}s` }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 }
