@@ -17,8 +17,8 @@ export default async function HomePage() {
         .from("users")
         .select("first_name, last_name, role")
         .eq("auth_id", user.id)
-        .single();
-      dbUser = data;
+        .limit(1);
+      dbUser = data?.[0] || null;
     }
 
     // Fetch real stats

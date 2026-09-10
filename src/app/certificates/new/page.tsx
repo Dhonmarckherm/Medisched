@@ -27,11 +27,12 @@ export default function NewCertificatePage() {
         router.push("/login");
         return;
       }
-      const { data: dbUser } = await supabase
+      const { data: dbUserData } = await supabase
         .from("users")
         .select("*")
         .eq("auth_id", authUser.id)
-        .single();
+        .limit(1);
+      const dbUser = dbUserData?.[0];
       if (dbUser) {
         setUser(dbUser);
         setFormData((prev) => ({

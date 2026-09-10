@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
-import { DownloadIcon } from "@/components/Icons";
+import { DownloadIcon, XCircleIcon } from "@/components/Icons";
 import { generateCertificatePDF } from "@/lib/pdf-generator";
+import { useToast } from "@/components/Toast";
 
 interface Certificate {
   id: string;
@@ -32,6 +33,28 @@ export default function CertificatesListClient({ certificates, isAdminOrNurse }:
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const { addToast } = useToast();
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this certificate request?")) return;
+    setCancellingId(id);
+    try {
+      const res = await fetch("/api/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, type: "certificate" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to cancel"); setCancellingId(null); return; }
+      addToast("success", "Certificate request cancelled");
+      window.location.reload();
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = certificates;
@@ -134,6 +157,13 @@ export default function CertificatesListClient({ certificates, isAdminOrNurse }:
                           title="Download PDF"
                         >
                           <DownloadIcon size={14} /> PDF
+                        </button>
+                      )}
+                      {!isAdminOrNurse && cert.status === "Pending" && (
+                        <button onClick={() => handleCancel(cert.id)} disabled={cancellingId === cert.id}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                          {cancellingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <XCircleIcon size={14} />}
+                          {cancellingId === cert.id ? "Cancelling..." : "Cancel"}
                         </button>
                       )}
                     </td>

@@ -25,8 +25,8 @@ export default function SchedulePage() {
   const fetchData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return;
-    const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
-    setUser(dbUser);
+    const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+    setUser(dbUserData?.[0] || null);
     const { data } = await supabase.from("accommodations").select("*").eq("status", "active").order("id", { ascending: false }).limit(1).maybeSingle();
     setAccommodation(data);
     setLoading(false);

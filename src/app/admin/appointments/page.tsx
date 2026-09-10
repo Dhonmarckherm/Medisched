@@ -25,8 +25,8 @@ export default function ManageAppointmentsPage() {
   const fetchData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return;
-    const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
-    setUser(dbUser);
+    const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+    setUser(dbUserData?.[0] || null);
     const { data } = await supabase.from("appointments").select("*, users(email)").order("created_at", { ascending: false });
     setAppointments(data || []);
     setLoading(false);

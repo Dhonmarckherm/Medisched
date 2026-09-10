@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
-import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon } from "@/components/Icons";
+import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon } from "@/components/Icons";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -15,6 +15,8 @@ export default function ProfilePage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: "", new_pw: "", confirm: "" });
+  const [changingPw, setChangingPw] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -22,7 +24,8 @@ export default function ProfilePage() {
     const fetchUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
-      const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
+      const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+      const dbUser = dbUserData?.[0];
       if (dbUser) {
         setUser(dbUser);
         setFormData({
@@ -67,6 +70,34 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new_pw !== passwordForm.confirm) {
+      addToast("error", "New passwords do not match");
+      return;
+    }
+    if (passwordForm.new_pw.length < 6) {
+      addToast("error", "New password must be at least 6 characters");
+      return;
+    }
+    setChangingPw(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: passwordForm.current, new_password: passwordForm.new_pw }),
+      });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to change password"); setChangingPw(false); return; }
+      addToast("success", "Password changed successfully");
+      setPasswordForm({ current: "", new_pw: "", confirm: "" });
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setChangingPw(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#f8faf9" }}>
@@ -82,6 +113,16 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen" style={{ background: "#f8faf9" }}>
       <Navbar user={user} />
+      {/* Loading overlay */}
+      {saving && (
+        <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-xl px-8 py-6 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-[3px] border-gray-200 border-t-primary rounded-full" style={{ animation: "spin 0.8s linear infinite" }} />
+            <p className="text-[14px] font-medium text-gray-600 m-0">Saving changes...</p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
       <main className="pt-[100px] pb-10 w-[90%] max-w-[800px] mx-auto">
         <div className="mb-8">
           <h1 className="text-[28px] font-bold text-[#1a1a2e]">My Profile</h1>
@@ -176,6 +217,42 @@ export default function ProfilePage() {
             <button type="submit" disabled={saving}
               className="w-full py-3 bg-primary text-white border-none rounded-lg text-[14px] font-medium cursor-pointer mt-6 hover:bg-primary-hover transition disabled:opacity-50">
               {saving ? "Saving..." : "Update Profile"}
+            </button>
+          </form>
+        </div>
+
+        {/* Change Password */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6 mt-6">
+          <h2 className="text-[16px] font-semibold text-[#1a1a2e] mb-6">Change Password</h2>
+          <form onSubmit={handlePasswordChange}>
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
+                  <LockIcon size={14} /> Current Password
+                </label>
+                <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} required
+                  className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Enter current password" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
+                    <LockIcon size={14} /> New Password
+                  </label>
+                  <input type="password" value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={6}
+                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Min 6 characters" />
+                </div>
+                <div>
+                  <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
+                    <LockIcon size={14} /> Confirm New Password
+                  </label>
+                  <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} required minLength={6}
+                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Re-enter new password" />
+                </div>
+              </div>
+            </div>
+            <button type="submit" disabled={changingPw}
+              className="w-full py-3 bg-primary text-white border-none rounded-lg text-[14px] font-medium cursor-pointer mt-6 hover:bg-primary-hover transition disabled:opacity-50">
+              {changingPw ? "Changing..." : "Change Password"}
             </button>
           </form>
         </div>

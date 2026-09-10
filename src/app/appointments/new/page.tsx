@@ -18,8 +18,8 @@ export default function NewAppointmentPage() {
     const fetchUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) { router.push("/login"); return; }
-      const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
-      setUser(dbUser);
+      const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+      setUser(dbUserData?.[0] || null);
     };
     fetchUser();
   }, []);

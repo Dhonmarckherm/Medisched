@@ -6,8 +6,9 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: dbUser } = await supabase
-    .from("users").select("id, role").eq("auth_id", user.id).single();
+  const { data: dbUserData } = await supabase
+    .from("users").select("id, role").eq("auth_id", user.id).limit(1);
+  const dbUser = dbUserData?.[0];
   if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const isAdminOrNurse = dbUser.role === "admin" || dbUser.role === "nurse";
@@ -26,8 +27,9 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { data: dbUser } = await supabase
-      .from("users").select("*").eq("auth_id", user.id).single();
+    const { data: dbUserData } = await supabase
+      .from("users").select("*").eq("auth_id", user.id).limit(1);
+    const dbUser = dbUserData?.[0];
     if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const body = await request.json();
@@ -58,13 +60,13 @@ export async function POST(request: NextRequest) {
         status: "Pending",
       })
       .select()
-      .single();
+      .limit(1);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ appointment: data }, { status: 201 });
+    return NextResponse.json({ appointment: data?.[0] }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

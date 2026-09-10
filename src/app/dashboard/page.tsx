@@ -12,14 +12,16 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", user.id).single();
+  const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", user.id).limit(1);
+  const dbUser = dbUserData?.[0] || null;
   if (!dbUser) redirect("/login");
 
-  const [stats, recentActivity, accommodation] = await Promise.all([
+  const [stats, recentActivity, { data: accData }] = await Promise.all([
     getDashboardStats(dbUser.id, dbUser.role),
     getRecentActivity(dbUser.id, dbUser.role),
-    supabase.from("accommodations").select("*").eq("status", "active").order("id", { ascending: false }).limit(1).single(),
+    supabase.from("accommodations").select("*").eq("status", "active").order("id", { ascending: false }).limit(1),
   ]);
+  const accommodation = { data: accData?.[0] || null };
 
   const isAdminOrNurse = dbUser.role === "admin" || dbUser.role === "nurse";
 

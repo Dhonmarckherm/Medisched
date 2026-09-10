@@ -9,13 +9,13 @@ export async function getCurrentUser() {
 
   if (!user) return null;
 
-  const { data: dbUser } = await supabase
+  const { data: dbUserData } = await supabase
     .from("users")
     .select("*")
     .eq("auth_id", user.id)
-    .single();
+    .limit(1);
 
-  return dbUser;
+  return dbUserData?.[0] || null;
 }
 
 export async function hashPassword(password: string): Promise<string> {

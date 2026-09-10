@@ -108,6 +108,17 @@ export default function SignupPage() {
 
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
+      {/* Loading overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-xl px-8 py-6 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-[3px] border-gray-200 border-t-primary rounded-full" style={{ animation: "spin 0.8s linear infinite" }} />
+            <p className="text-[14px] font-medium text-gray-600 m-0">Creating account...</p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       {/* Back to Home */}
       <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
         <ArrowLeftIcon size={14} /> Back to Home
