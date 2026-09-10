@@ -16,12 +16,50 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Check if user has a valid session (from auth callback)
+  // Check for session, URL hash tokens, or PKCE code
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }: { data: { session: unknown } }) => {
-      setHasSession(!!data.session);
+    async function checkAuth() {
+      // 1. Check for PKCE code in URL query (?code=xxx)
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get("code");
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!exchangeError) {
+          setHasSession(true);
+          setChecking(false);
+          // Clean the URL
+          window.history.replaceState({}, "", "/reset-password");
+          return;
+        } else {
+          setError("Invalid or expired reset link. Please request a new one.");
+          setChecking(false);
+          return;
+        }
+      }
+
+      // 2. Check for tokens in URL hash (#access_token=xxx)
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        // Supabase should auto-detect this, but let's help it
+        const { error: sessionError } = await supabase.auth.getSession();
+        if (!sessionError) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            setHasSession(true);
+            setChecking(false);
+            window.history.replaceState({}, "", "/reset-password");
+            return;
+          }
+        }
+      }
+
+      // 3. Check for existing session (from auth callback)
+      const { data: { session } } = await supabase.auth.getSession();
+      setHasSession(!!session);
       setChecking(false);
-    });
+    }
+
+    checkAuth();
   }, [supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,11 +70,9 @@ export default function ResetPasswordPage() {
     if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
 
     try {
-      // User has a session from the auth callback - update password directly
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) { setError(updateError.message); setLoading(false); return; }
       setSuccess("Password reset successfully! Redirecting to login...");
-      // Sign out to clear the recovery session
       await supabase.auth.signOut();
       setTimeout(() => router.push("/login"), 2000);
     } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
