@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { MailIcon, LockIcon, HospitalIcon, ArrowLeftIcon, CheckCircleIcon } from "@/components/Icons";
 
 export default function ForgotPasswordPage() {
@@ -28,9 +27,9 @@ export default function ForgotPasswordPage() {
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
       {/* Back to Home */}
-      <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+      <a href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
         <ArrowLeftIcon size={14} /> Back to Home
-      </Link>
+      </a>
 
       {/* Left Panel */}
       <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
@@ -75,9 +74,9 @@ export default function ForgotPasswordPage() {
           </button>
 
           <p className="mt-5 text-center text-[13px]">
-            <Link href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
+            <a href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
               <ArrowLeftIcon size={14} /> Back to Login
-            </Link>
+            </a>
           </p>
         </form>
       </div>
