@@ -90,10 +90,12 @@ export default function Navbar({ user }: NavbarProps) {
                 <li><Link href="/appointments" className="nav-link">Appointments</Link></li>
                 <li><Link href="/certificates" className="nav-link">Certificates</Link></li>
                 <li><Link href="/schedule" className="nav-link">Schedule</Link></li>
+                                <li><Link href="/calendar" className="nav-link">Calendar</Link></li>
                 {isAdminOrNurse && (
                   <>
                     <li><Link href="/pending" className="nav-link">Pending</Link></li>
                     <li><Link href="/admin" className="nav-link">Admin</Link></li>
+                    <li><Link href="/admin/analytics" className="nav-link">Analytics</Link></li>
                   </>
                 )}
               </>
@@ -265,6 +267,7 @@ export default function Navbar({ user }: NavbarProps) {
                   <SidebarLink href="/appointments" icon={<CalendarIcon size={20} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/schedule" icon={<ClockIcon size={20} />} label="Schedule" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                                    <SidebarLink href="/calendar" icon={<CalendarIcon size={20} />} label="Calendar" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/profile" icon={<UserIcon size={20} />} label="Profile" pathname={pathname} onClick={() => setMobileOpen(false)} />
 
                   {isAdminOrNurse && (
@@ -272,6 +275,7 @@ export default function Navbar({ user }: NavbarProps) {
                       <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
                       <SidebarLink href="/pending" icon={<BellIcon size={20} />} label="Pending" pathname={pathname} onClick={() => setMobileOpen(false)} badge={pendingCount} />
                       <SidebarLink href="/admin" icon={<ShieldIcon size={20} />} label="Admin Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                      <SidebarLink href="/admin/analytics" icon={<DashboardIcon size={20} />} label="Analytics" pathname={pathname} onClick={() => setMobileOpen(false)} />
                     </>
                   )}
                 </>

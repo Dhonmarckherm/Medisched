@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
-import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon } from "@/components/Icons";
+import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon, ChartIcon } from "@/components/Icons";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -73,33 +73,39 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Management Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Link href="/admin/appointments" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
               <CalendarIcon size={20} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Appointments</p>
-            <p className="text-gray-400 text-[13px] mt-1">View and manage all appointments</p>
+            <p className="font-medium text-[#1a1a2e] text-[15px]">Appointments</p>
+            <p className="text-gray-400 text-[13px] mt-1">Manage all appointments</p>
             <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
           </Link>
           <Link href="/admin/certificates" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
               <CertificateIcon size={20} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Certificates</p>
-            <p className="text-gray-400 text-[13px] mt-1">View and manage all certificates</p>
+            <p className="font-medium text-[#1a1a2e] text-[15px]">Certificates</p>
+            <p className="text-gray-400 text-[13px] mt-1">Manage all certificates</p>
             <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
           </Link>
-          {isAdmin && (
-            <Link href="/admin/users" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-                <UsersIcon size={20} />
-              </div>
-              <p className="font-medium text-[#1a1a2e] text-[15px]">Manage Users</p>
-              <p className="text-gray-400 text-[13px] mt-1">Manage roles and permissions</p>
-              <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
-            </Link>
-          )}
+          <Link href="/calendar" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
+              <CalendarIcon size={20} />
+            </div>
+            <p className="font-medium text-[#1a1a2e] text-[15px]">Calendar</p>
+            <p className="text-gray-400 text-[13px] mt-1">Visual appointment schedule</p>
+            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+          </Link>
+          <Link href="/admin/analytics" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
+            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 mb-4">
+              <ChartIcon size={20} />
+            </div>
+            <p className="font-medium text-[#1a1a2e] text-[15px]">Analytics</p>
+            <p className="text-gray-400 text-[13px] mt-1">Usage insights & reports</p>
+            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+          </Link>
         </div>
 
         {/* Pending Tables */}
