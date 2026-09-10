@@ -8,10 +8,11 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError(""); setSuccess(""); setDebug([]); setLoading(true);
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -19,9 +20,10 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
+      if (data.debug) setDebug(data.debug);
       if (!res.ok) { setError(data.error || "Failed to send reset link"); setLoading(false); return; }
-      setSuccess("Password reset link sent! Check your email inbox.");
-    } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
+      setSuccess(data.message || "Password reset link sent! Check your email inbox.");
+    } catch (err) { setError(`Unexpected: ${err}`); } finally { setLoading(false); }
   };
 
   return (
@@ -49,6 +51,11 @@ export default function ForgotPasswordPage() {
           <p className="text-gray-400 text-[14px] mb-8">We&apos;ll send a reset link to your email</p>
 
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">{error}</div>}
+          {debug.length > 0 && (
+            <div className="bg-gray-50 p-3 rounded-lg mb-5 text-[11px] font-mono text-gray-600 border border-gray-200 overflow-x-auto">
+              {debug.map((line, i) => <div key={i}>{line}</div>)}
+            </div>
+          )}
           {success && (
             <div className="bg-emerald-50 text-emerald-600 p-4 rounded-lg mb-5 text-[14px] border border-emerald-100 flex items-start gap-3">
               <CheckCircleIcon size={20} className="flex-shrink-0 mt-0.5" />
