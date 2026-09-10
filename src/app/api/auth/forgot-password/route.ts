@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createClient } from "@supabase/supabase-js";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   const debug: string[] = [];
@@ -26,30 +26,50 @@ export async function POST(request: NextRequest) {
 
     debug.push(`User: ${dbUser.first_name} (${dbUser.id})`);
 
-    // Use resetPasswordForEmail - Supabase's built-in method that handles the link correctly
+    // Generate recovery link using Supabase Admin API
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
-    const redirectTo = `${appUrl}/reset-password`;
-    debug.push(`Redirect to: ${redirectTo}`);
+    debug.push(`App URL: ${appUrl}`);
 
-    // Use anon client for resetPasswordForEmail (it's designed for unauthenticated users)
-    const anonClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    const { error: resetError } = await anonClient.auth.resetPasswordForEmail(email, {
-      redirectTo,
+    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: {
+        redirectTo: `${appUrl}/reset-password`,
+      },
     });
 
-    debug.push(`Reset email error: ${resetError?.message || "none"}`);
+    debug.push(`Link error: ${linkError?.message || "none"}`);
 
-    if (resetError) {
-      return NextResponse.json({ error: `Failed to send reset email: ${resetError.message}`, debug }, { status: 500 });
+    if (linkError || !linkData) {
+      return NextResponse.json({ error: "Failed to generate reset link", debug }, { status: 500 });
     }
 
-    debug.push(`Reset email sent successfully via Supabase`);
-    return NextResponse.json({ message: "Password reset email sent! Check your inbox.", debug });
+    // The action_link is the URL the user needs to visit
+    const resetUrl = linkData.properties?.action_link;
+    debug.push(`Reset URL exists: ${!!resetUrl}`);
+    if (resetUrl) {
+      // Show first 80 chars of URL for debugging (hide token)
+      debug.push(`URL start: ${resetUrl.substring(0, 80)}...`);
+    }
+
+    if (!resetUrl) {
+      debug.push(`Full linkData keys: ${JSON.stringify(Object.keys(linkData))}`);
+      if (linkData.properties) {
+        debug.push(`Properties keys: ${JSON.stringify(Object.keys(linkData.properties))}`);
+      }
+      return NextResponse.json({ error: "No action_link in response", debug }, { status: 500 });
+    }
+
+    // Send email via Gmail SMTP (ISPSC CLINIC template)
+    debug.push(`Sending via Gmail SMTP to: ${email}`);
+    const sent = await sendPasswordResetEmail(email, dbUser.first_name, resetUrl);
+    debug.push(`Email sent: ${sent}`);
+
+    if (!sent) {
+      return NextResponse.json({ error: "Failed to send reset email", debug }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: "Password reset email sent via ISPSC CLINIC!", debug });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     debug.push(`Unexpected error: ${errMsg}`);
