@@ -99,7 +99,7 @@ function LoginForm() {
               <div className="flex items-center border border-gray-200 rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <MailIcon className="text-gray-400 mr-2 flex-shrink-0" size={18} />
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="you@email.com" />
               </div>
             </div>
 
@@ -108,7 +108,7 @@ function LoginForm() {
               <div className="flex items-center border border-gray-200 rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <IdCardIcon className="text-gray-400 mr-2 flex-shrink-0" size={18} />
                 <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Your ID number" />
               </div>
             </div>
 
@@ -117,7 +117,7 @@ function LoginForm() {
               <div className="flex items-center border border-gray-200 rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2 flex-shrink-0" size={18} />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Enter password" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Enter password" />
               </div>
             </div>
           </div>

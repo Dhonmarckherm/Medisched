@@ -137,7 +137,7 @@ export default function SignupPage() {
                 <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.firstName ? 'border-red-300' : 'border-gray-200'}`}>
                   <UserIcon className="text-gray-400 mr-2" size={18} />
                   <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} onBlur={handleBlur} required
-                    className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="First" />
+                    className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="First" />
                 </div>
                 {errors.firstName && <p className="text-red-500 text-[12px] mt-1">{errors.firstName}</p>}
               </div>
@@ -146,7 +146,7 @@ export default function SignupPage() {
                 <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.lastName ? 'border-red-300' : 'border-gray-200'}`}>
                   <UserIcon className="text-gray-400 mr-2" size={18} />
                   <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} onBlur={handleBlur} required
-                    className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Last" />
+                    className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Last" />
                 </div>
                 {errors.lastName && <p className="text-red-500 text-[12px] mt-1">{errors.lastName}</p>}
               </div>
@@ -157,7 +157,7 @@ export default function SignupPage() {
               <div className="flex items-center border border-gray-200 rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <UserIcon className="text-gray-400 mr-2 flex-shrink-0" size={18} />
                 <input type="text" name="middleName" value={formData.middleName} onChange={handleChange}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Middle (optional)" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Middle (optional)" />
               </div>
             </div>
 
@@ -166,7 +166,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.email ? 'border-red-300' : 'border-gray-200'}`}>
                 <MailIcon className="text-gray-400 mr-2" size={18} />
                 <input type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="you@email.com" />
               </div>
               {errors.email && <p className="text-red-500 text-[12px] mt-1">{errors.email}</p>}
             </div>
@@ -176,7 +176,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.idNumber ? 'border-red-300' : 'border-gray-200'}`}>
                 <IdCardIcon className="text-gray-400 mr-2" size={18} />
                 <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} onBlur={handleBlur} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Your ID number" />
               </div>
               {errors.idNumber && <p className="text-red-500 text-[12px] mt-1">{errors.idNumber}</p>}
             </div>
@@ -207,7 +207,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.password ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type="password" name="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} required minLength={6}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Min 6 characters" />
               </div>
               {errors.password && <p className="text-red-500 text-[12px] mt-1">{errors.password}</p>}
             </div>
@@ -217,7 +217,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.confirmPassword ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} required minLength={6}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter password" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Re-enter password" />
               </div>
               {errors.confirmPassword && <p className="text-red-500 text-[12px] mt-1">{errors.confirmPassword}</p>}
             </div>
