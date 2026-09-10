@@ -38,23 +38,23 @@ export default async function DashboardPage() {
                 {isAdminOrNurse ? `Good day, ${dbUser.first_name}` : `Welcome back, ${dbUser.first_name}`}
               </h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 flex-wrap">
               {!isAdminOrNurse && (
                 <>
                   <Link href="/appointments/new"
-                    className="inline-flex items-center gap-1.5 bg-[#111] text-white px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-[#222] transition">
-                    <CalendarIcon size={14} /> New Appointment
+                    className="inline-flex items-center gap-1 bg-[#111] text-white px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg no-underline text-[11px] sm:text-[13px] font-medium hover:bg-[#222] transition">
+                    <CalendarIcon size={12} /> New Appointment
                   </Link>
                   <Link href="/certificates/new"
-                    className="inline-flex items-center gap-1.5 bg-white text-[#333] px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-gray-50 transition border border-gray-200">
-                    <CertificateIcon size={14} /> Request Certificate
+                    className="inline-flex items-center gap-1 bg-white text-[#333] px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg no-underline text-[11px] sm:text-[13px] font-medium hover:bg-gray-50 transition border border-gray-200">
+                    <CertificateIcon size={12} /> Request Certificate
                   </Link>
                 </>
               )}
               {isAdminOrNurse && (
                 <Link href="/pending"
-                  className="inline-flex items-center gap-1.5 bg-[#111] text-white px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-[#222] transition">
-                  View Pending <ArrowRightIcon size={14} />
+                  className="inline-flex items-center gap-1 bg-[#111] text-white px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg no-underline text-[11px] sm:text-[13px] font-medium hover:bg-[#222] transition">
+                  View Pending <ArrowRightIcon size={12} />
                 </Link>
               )}
             </div>
