@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -17,6 +17,7 @@ interface NavbarProps {
 
 export default function Navbar({ user }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
   const isAdminOrNurse = user?.role === "admin" || user?.role === "nurse";
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -218,156 +219,92 @@ export default function Navbar({ user }: NavbarProps) {
       {mobileOpen && (
         <div className="fixed top-0 left-0 right-0 bottom-0 z-[999] lg:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right">
-            {/* User info header (if logged in) */}
-            {user && (
-              <div className="px-5 py-5 bg-gradient-to-r from-primary to-emerald-600 text-white">
+          <div className="absolute top-0 right-0 bottom-0 w-[300px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right flex flex-col">
+            
+            {/* Profile Header */}
+            {user ? (
+              <div className="px-5 pt-6 pb-5 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-bold text-[16px]">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-white font-bold text-[14px] flex-shrink-0">
                     {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
                   </div>
-                  <div>
-                    <div className="text-[15px] font-semibold">{user.first_name} {user.last_name}</div>
-                    <div className="text-[12px] text-white/70 capitalize">{user.role}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-semibold text-gray-800 truncate">{user.first_name} {user.last_name}</div>
+                    <div className="text-[12px] text-gray-400 capitalize">{user.role}</div>
                   </div>
+                  <button onClick={() => setMobileOpen(false)} className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer p-1">
+                    <XIcon size={18} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="px-5 pt-6 pb-5 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <HospitalIcon className="text-white" size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[15px] font-bold text-gray-800">MEDISCHED <span className="text-primary">CERT</span></div>
+                    <div className="text-[11px] text-gray-400">Medical Clinic Portal</div>
+                  </div>
+                  <button onClick={() => setMobileOpen(false)} className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer p-1">
+                    <XIcon size={18} />
+                  </button>
                 </div>
               </div>
             )}
 
-            {!user && (
-              <div className="px-5 py-5 bg-gradient-to-r from-primary to-emerald-600 text-white">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
-                    <HospitalIcon className="text-white" size={18} />
-                  </div>
-                  <span className="text-[16px] font-bold">MEDISCHED <span className="text-white/70">CERT</span></span>
-                </div>
-              </div>
-            )}
-
-            <nav className="flex flex-col p-3 gap-0.5">
-              <Link href="/" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                <span className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                    <HospitalIcon size={16} />
-                  </span>
-                  Home
-                </span>
-              </Link>
-
+            {/* Navigation */}
+            <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+              {/* Main */}
+              <SidebarLink href="/" icon={<HomeIcon size={20} />} label="Home" pathname={pathname} onClick={() => setMobileOpen(false)} />
+              
               {user ? (
                 <>
-                  <Link href="/dashboard" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
-                        <HospitalIcon size={16} />
-                      </span>
-                      Dashboard
-                    </span>
-                  </Link>
-                  <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
-                        <CalendarIcon size={16} />
-                      </span>
-                      Appointments
-                    </span>
-                  </Link>
-                  <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500">
-                        <CertificateIcon size={16} />
-                      </span>
-                      Certificates
-                    </span>
-                  </Link>
-                  <Link href="/schedule" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
-                        <ClockIcon size={16} />
-                      </span>
-                      Schedule
-                    </span>
-                  </Link>
-                  <Link href="/profile" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                        <UserIcon size={16} />
-                      </span>
-                      Profile
-                    </span>
-                  </Link>
+                  <SidebarLink href="/dashboard" icon={<DashboardIcon size={20} />} label="Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/appointments" icon={<CalendarIcon size={20} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/schedule" icon={<ClockIcon size={20} />} label="Schedule" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/profile" icon={<UserIcon size={20} />} label="Profile" pathname={pathname} onClick={() => setMobileOpen(false)} />
 
                   {isAdminOrNurse && (
                     <>
-                      <div className="h-px bg-gray-100 my-2 mx-3"></div>
-                      <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
-                      <Link href="/pending" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                        <span className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 relative">
-                            <BellIcon size={16} />
-                            {pendingCount > 0 && (
-                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">{pendingCount}</span>
-                            )}
-                          </span>
-                          Pending
-                          {pendingCount > 0 && (
-                            <span className="bg-red-50 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-semibold">{pendingCount}</span>
-                          )}
-                        </span>
-                      </Link>
-                      <Link href="/admin" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                        <span className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <ShieldIcon size={16} />
-                          </span>
-                          Admin Dashboard
-                        </span>
-                      </Link>
+                      <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
+                      <SidebarLink href="/pending" icon={<BellIcon size={20} />} label="Pending" pathname={pathname} onClick={() => setMobileOpen(false)} badge={pendingCount} />
+                      <SidebarLink href="/admin" icon={<ShieldIcon size={20} />} label="Admin Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
                     </>
                   )}
-
-                  <div className="mt-3 px-1">
-                    <button
-                      onClick={() => { setLogoutModal(true); setMobileOpen(false); }}
-                      className="w-full py-3 bg-red-50 text-red-500 rounded-xl font-semibold border-none cursor-pointer text-[14px] hover:bg-red-100 transition flex items-center justify-center gap-2"
-                    >
-                      <XIcon size={16} /> Logout
-                    </button>
-                  </div>
                 </>
               ) : (
                 <>
-                  <Link href="/appointments" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
-                        <CalendarIcon size={16} />
-                      </span>
-                      Appointments
-                    </span>
-                  </Link>
-                  <Link href="/certificates" className="mobile-nav-link" onClick={() => setMobileOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500">
-                        <CertificateIcon size={16} />
-                      </span>
-                      Certificates
-                    </span>
-                  </Link>
-                  <div className="h-px bg-gray-100 my-2 mx-3"></div>
-                  <div className="flex flex-col gap-2 mt-2 px-1">
-                    <Link href="/login" onClick={() => setMobileOpen(false)}
-                      className="py-3 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-[14px] no-underline text-center hover:border-primary hover:text-primary transition">
-                      Login
-                    </Link>
-                    <Link href="/signup" onClick={() => setMobileOpen(false)}
-                      className="py-3 bg-primary text-white rounded-xl font-semibold text-[14px] no-underline text-center hover:bg-primary-hover transition">
-                      Sign Up
-                    </Link>
-                  </div>
+                  <SidebarLink href="/appointments" icon={<CalendarIcon size={20} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
                 </>
               )}
             </nav>
+
+            {/* Bottom section */}
+            <div className="px-3 pb-5 border-t border-gray-100 pt-4">
+              {user ? (
+                <button
+                  onClick={() => { setLogoutModal(true); setMobileOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 rounded-xl border-none bg-transparent cursor-pointer text-[14px] font-medium hover:bg-red-50 transition"
+                >
+                  <XIcon size={20} /> Logout
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <Link href="/login" onClick={() => setMobileOpen(false)}
+                    className="w-full flex items-center justify-center py-2.5 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold text-[14px] no-underline hover:border-primary hover:text-primary transition">
+                    Login
+                  </Link>
+                  <Link href="/signup" onClick={() => setMobileOpen(false)}
+                    className="w-full flex items-center justify-center py-2.5 bg-primary text-white rounded-xl font-semibold text-[14px] no-underline hover:bg-primary-hover transition">
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -471,6 +408,36 @@ function PendingNotifItem({ supabase, table, label, href, onClick, statusFilter 
       <span className="w-[24px] h-[24px] bg-amber-100 text-amber-700 text-[12px] font-bold rounded-full flex items-center justify-center">
         {count}
       </span>
+    </Link>
+  );
+}
+
+// Sidebar link component for mobile drawer
+function SidebarLink({ href, icon, label, pathname, onClick, badge }: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  pathname: string;
+  onClick: () => void;
+  badge?: number;
+}) {
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl no-underline text-[14px] font-medium transition-all duration-150 ${
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+      }`}
+    >
+      <span className={isActive ? "text-primary" : "text-gray-400"}>{icon}</span>
+      <span className="flex-1">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">{badge}</span>
+      )}
     </Link>
   );
 }
