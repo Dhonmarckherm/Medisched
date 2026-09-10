@@ -8,9 +8,6 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
 });
 
 const FROM = `"${process.env.SMTP_FROM_NAME || "MEDISCHED CERT"}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`;
@@ -230,12 +227,6 @@ export async function sendWelcomeEmail(to: string, name: string) {
       subject: "Welcome to MEDISCHED CERT",
       html,
       text: htmlToText(html),
-      headers: {
-        "X-Priority": "1",
-        "X-MSMail-Priority": "High",
-        "MIME-Version": "1.0",
-        "Content-Type": "multipart/alternative; boundary=\"boundary\"",
-      },
     });
     return true;
   } catch (err) {
@@ -259,12 +250,6 @@ export async function sendStatusNotification(
       subject: `${type === "appointment" ? "Appointment" : "Certificate"} ${status} — MEDISCHED CERT`,
       html,
       text: htmlToText(html),
-      headers: {
-        "X-Priority": "1",
-        "X-MSMail-Priority": "High",
-        "MIME-Version": "1.0",
-        "Content-Type": "multipart/alternative; boundary=\"boundary\"",
-      },
     });
     return true;
   } catch (err) {
