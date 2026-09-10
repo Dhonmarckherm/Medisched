@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Public routes - skip auth check
-  const publicRoutes = ["/", "/login", "/signup", "/reset-password"];
+  const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth");
 
   if (isPublicRoute) {
