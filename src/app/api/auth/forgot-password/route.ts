@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPasswordResetEmail } from "@/lib/email";
 
@@ -8,9 +7,9 @@ export async function POST(request: NextRequest) {
     const { email } = await request.json();
     if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 });
 
-    // Check if user exists in our database
-    const supabase = await createClient();
-    const { data: dbUser } = await supabase
+    // Use service client to bypass RLS (user is not logged in)
+    const serviceClient = createServiceClient();
+    const { data: dbUser } = await serviceClient
       .from("users")
       .select("id, first_name, email")
       .eq("email", email)
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
 
     // Generate recovery link using Supabase Admin API
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
-    const serviceClient = createServiceClient();
     const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
       type: "recovery",
       email,
