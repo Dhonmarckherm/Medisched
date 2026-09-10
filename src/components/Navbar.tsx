@@ -68,13 +68,17 @@ export default function Navbar({ user }: NavbarProps) {
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
       } else if (studentId) {
+        // Only show notifications for items updated in the last 3 days
+        const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
         const [appts, certs] = await Promise.all([
           supabase.from("appointments").select("id", { count: "exact", head: true })
             .eq("user_id", studentId)
-            .in("status", ["Approved", "Rejected", "Completed"]),
+            .in("status", ["Approved", "Rejected", "Completed"])
+            .gte("updated_at", recentDate),
           supabase.from("certificates").select("id", { count: "exact", head: true })
             .eq("user_id", studentId)
-            .in("status", ["Approved", "Rejected", "Completed"]),
+            .in("status", ["Approved", "Rejected", "Completed"])
+            .gte("updated_at", recentDate),
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
       }
@@ -490,6 +494,9 @@ function PendingNotifItem({ supabase, table, label, description, icon, iconBg, i
     let query = supabase.from(table).select("id", { count: "exact", head: true });
     if (userId) {
       query = query.eq("user_id", userId);
+      // Only show recent notifications (last 3 days) for students
+      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte("updated_at", recentDate);
     }
     if (statusFilter) {
       query = query.in("status", statusFilter);
