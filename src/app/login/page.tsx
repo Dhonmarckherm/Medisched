@@ -18,6 +18,7 @@ function LoginForm() {
   const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState<string[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToast();
@@ -47,6 +48,7 @@ function LoginForm() {
       });
 
       const data = await res.json();
+      if (data.debug) setDebug(data.debug);
 
       if (!res.ok) {
         addToast("error", data.error || "Login failed");
@@ -91,6 +93,12 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="w-full max-w-[400px]">
           <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Welcome back</h2>
           <p className="text-gray-400 text-[14px] mb-8">Sign in to your account to continue</p>
+
+          {debug.length > 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-5 text-[12px] font-mono">
+              {debug.map((line, i) => <div key={i} className="text-gray-600">{line}</div>)}
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>

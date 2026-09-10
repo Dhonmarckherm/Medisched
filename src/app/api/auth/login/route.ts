@@ -5,15 +5,14 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
+  const debug: string[] = [];
   try {
     const body = await request.json();
     const { email, id_number, password } = body;
+    debug.push(`Email: ${email}, ID: ${id_number}`);
 
     if (!email || !id_number || !password) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "All fields are required", debug }, { status: 400 });
     }
 
     const supabaseAdmin = createServiceClient();
@@ -26,28 +25,26 @@ export async function POST(request: NextRequest) {
       .eq("id_number", id_number)
       .single();
 
+    debug.push(`User found: ${!!user}, Error: ${error?.message || "none"}`);
+
     if (error || !user) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid credentials", debug }, { status: 401 });
     }
+
+    debug.push(`Has password_hash: ${!!user.password_hash}, Length: ${user.password_hash?.length || 0}`);
 
     // Verify password
     const valid = await bcrypt.compare(password, user.password_hash);
+    debug.push(`Bcrypt match: ${valid}`);
+
     if (!valid) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid credentials", debug }, { status: 401 });
     }
 
     // Check active status
+    debug.push(`Active status: ${user.active_status}`);
     if (user.active_status !== "active") {
-      return NextResponse.json(
-        { error: "Account is deactivated" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Account is deactivated", debug }, { status: 403 });
     }
 
     // Create a fresh server client with cookies to sign in
@@ -61,6 +58,7 @@ export async function POST(request: NextRequest) {
         first_name: user.first_name,
         last_name: user.last_name,
       },
+      debug,
     });
 
     const supabase = createServerClient(
@@ -72,11 +70,9 @@ export async function POST(request: NextRequest) {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
-            // Set cookies on the cookie store
             cookiesToSet.forEach(({ name, value }) =>
               cookieStore.set(name, value)
             );
-            // Also set on the response so they're sent to the browser
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, options)
             );
@@ -91,18 +87,16 @@ export async function POST(request: NextRequest) {
       password,
     });
 
+    debug.push(`Supabase auth error: ${authError?.message || "none"}`);
+
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed: " + authError.message },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentication failed: " + authError.message, debug }, { status: 401 });
     }
 
     return response;
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    debug.push(`Unexpected: ${errMsg}`);
+    return NextResponse.json({ error: "Internal server error", debug }, { status: 500 });
   }
 }
