@@ -243,14 +243,30 @@ export default function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ minWidth: 44, minHeight: 44 }}
-        >
-          {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
-        </button>
+        {/* Mobile: Notification Bell + Menu Button */}
+        <div className="flex lg:hidden items-center gap-1">
+          {user && (
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="relative text-gray-500 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
+              style={{ minWidth: 44, minHeight: 44 }}
+            >
+              <BellIcon size={20} />
+              {pendingCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              )}
+            </button>
+          )}
+          <button
+            className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            style={{ minWidth: 44, minHeight: 44 }}
+          >
+            {mobileOpen ? <XIcon size={22} /> : <MenuIcon size={22} />}
+          </button>
+        </div>
       </div>
     </header>
 
@@ -286,6 +302,18 @@ export default function Navbar({ user }: NavbarProps) {
 
             {/* Nav Links */}
             <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
+              {/* Mobile Notification Summary */}
+              {user && pendingCount > 0 && (
+                <div className="mx-1 mb-2 px-3 py-2.5 bg-amber-50 rounded-lg flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <BellIcon size={15} className="text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-amber-800 m-0">{pendingCount} pending</p>
+                    <p className="text-[11px] text-amber-500 m-0">Needs your attention</p>
+                  </div>
+                </div>
+              )}
               {!user && (
                 <SidebarLink href="/" icon={<HomeIcon size={19} />} label="Home" pathname={pathname} onClick={() => setMobileOpen(false)} />
               )}
