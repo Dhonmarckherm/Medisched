@@ -42,18 +42,18 @@ function baseLayout(title: string, content: string) {
 <body style="margin:0;padding:0;background:#f8faf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faf9;padding:48px 20px">
 <tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden">
+<table width="640" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden">
 
 <!-- Logo Bar -->
 <tr>
-<td style="padding:32px 40px 28px;text-align:center;background:linear-gradient(135deg,#84B179 0%,#5a9a6e 100%)">
+<td style="padding:36px 48px 32px;text-align:center;background:linear-gradient(135deg,#84B179 0%,#5a9a6e 100%)">
 <table width="100%" cellpadding="0" cellspacing="0">
 <tr><td style="text-align:center">
-<div style="display:inline-block;width:44px;height:44px;background:rgba(255,255,255,0.2);border-radius:12px;line-height:44px;text-align:center;margin-bottom:12px">
-<span style="color:#fff;font-size:22px">&#9764;</span>
+<div style="display:inline-block;width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:12px;line-height:48px;text-align:center;margin-bottom:14px">
+<span style="color:#fff;font-size:24px">&#9764;</span>
 </div>
-<div style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px;margin:0">MEDISCHED CERT</div>
-<div style="color:rgba(255,255,255,0.7);font-size:12px;margin:4px 0 0;letter-spacing:0.3px">Clinic Management System</div>
+<div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:0.5px;margin:0">ISPSC CLINIC CANDON CAMPUS</div>
+<div style="color:rgba(255,255,255,0.8);font-size:13px;margin:6px 0 0;letter-spacing:0.3px">Medical Clinic Management System</div>
 </td></tr>
 </table>
 </td>
@@ -61,16 +61,16 @@ function baseLayout(title: string, content: string) {
 
 <!-- Content -->
 <tr>
-<td style="padding:40px">
+<td style="padding:44px 48px">
 ${content}
 </td>
 </tr>
 
 <!-- Footer -->
 <tr>
-<td style="padding:24px 40px;background:#fafbfc;text-align:center;border-top:1px solid #f0f0f0">
-<p style="margin:0;font-size:12px;color:#999;letter-spacing:0.2px">Philippine Standard University</p>
-<p style="margin:6px 0 0;font-size:11px;color:#bbb">This is an automated email. Please do not reply.</p>
+<td style="padding:28px 48px;background:#fafbfc;text-align:center;border-top:1px solid #f0f0f0">
+<p style="margin:0;font-size:13px;color:#888;letter-spacing:0.2px;font-weight:500">ISPSC Clinic Candon Campus</p>
+<p style="margin:8px 0 0;font-size:12px;color:#aaa">This is an automated message. For concerns, please visit the clinic directly.</p>
 </td>
 </tr>
 
@@ -82,16 +82,17 @@ ${content}
 }
 
 function welcomeEmail(name: string) {
-  return baseLayout("Welcome to MEDISCHED CERT", `
-<div style="margin-bottom:28px">
-<h1 style="margin:0 0 10px;font-size:24px;color:#111;font-weight:700;letter-spacing:-0.3px">Welcome, ${name}!</h1>
-<p style="margin:0;font-size:15px;color:#666;line-height:1.7">
-Your account has been created. You're all set to use the clinic management system.
+  return baseLayout("Welcome to ISPSC Clinic", `
+<div style="margin-bottom:32px">
+<h1 style="margin:0 0 12px;font-size:26px;color:#111;font-weight:700;letter-spacing:-0.3px">Hello, ${name}!</h1>
+<p style="margin:0;font-size:16px;color:#555;line-height:1.8">
+Welcome to the ISPSC Clinic Candon Campus! &#127891;<br>
+Your account has been successfully created. You can now book appointments, request medical certificates, and track your requests — all in one place.
 </p>
 </div>
 
 <!-- Feature Cards -->
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
 <tr>
 <td style="padding:16px 20px;background:#f8faf9;border-radius:12px;border:1px solid #f0f0f0">
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -141,8 +142,12 @@ Your account has been created. You're all set to use the clinic management syste
 </tr>
 </table>
 
-<p style="margin:0;font-size:14px;color:#666;line-height:1.6">
-Log in to your dashboard to get started. If you have any questions, feel free to visit the clinic.
+<p style="margin:0;font-size:15px;color:#555;line-height:1.7">
+Log in to your dashboard to get started. If you have any questions or need assistance, feel free to visit us at the clinic. We're here to help!
+</p>
+
+<p style="margin:24px 0 0;font-size:14px;color:#84B179;font-weight:600">
+&#128154; Your health is our priority!
 </p>
   `);
 }
@@ -157,10 +162,10 @@ function statusEmail(name: string, type: "appointment" | "certificate", status: 
   const typeLabel = type === "appointment" ? "Appointment" : "Certificate";
 
   return baseLayout(`${typeLabel} ${status}`, `
-<div style="margin-bottom:28px">
-<h1 style="margin:0 0 10px;font-size:24px;color:#111;font-weight:700;letter-spacing:-0.3px">Hi ${name},</h1>
-<p style="margin:0;font-size:15px;color:#666;line-height:1.7">
-Your ${type.toLowerCase()} request ${verb}. Here's the summary:
+<div style="margin-bottom:32px">
+<h1 style="margin:0 0 12px;font-size:26px;color:#111;font-weight:700;letter-spacing:-0.3px">Hi ${name}, &#128075;</h1>
+<p style="margin:0;font-size:16px;color:#555;line-height:1.8">
+Good day! We'd like to inform you that your ${type.toLowerCase()} request has been <strong style="color:${accent}">${verb.replace("has been ", "")}</strong>. Here are the details:
 </p>
 </div>
 
@@ -213,6 +218,17 @@ If you believe this is a mistake, please visit the clinic or contact the admin f
 </tr>
 </table>
 ` : ""}
+
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0">
+<tr><td style="padding:20px 24px;background:#f8faf9;border-radius:12px">
+<p style="margin:0;font-size:14px;color:#555;line-height:1.7">
+Thank you for using the ISPSC Clinic system. ${isApproved ? "We hope you are doing well!" : "If you have questions, please visit us at the clinic."}
+</p>
+<p style="margin:12px 0 0;font-size:13px;color:#84B179;font-weight:600">
+&#128154; Take care and stay healthy!
+</p>
+</td></tr>
+</table>
   `);
 }
 
