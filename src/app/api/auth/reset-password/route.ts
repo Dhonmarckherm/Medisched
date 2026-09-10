@@ -18,14 +18,31 @@ export async function POST(request: NextRequest) {
 
     const serviceClient = createServiceClient();
 
-    // Find user with this reset token that hasn't expired
-    const { data: user, error: findError } = await serviceClient
+    // First check if the reset_token column exists by trying a simple query
+    const { data: allUsers, error: colCheck } = await serviceClient
+      .from("users")
+      .select("id, reset_token")
+      .limit(1);
+
+    debug.push(`Column check error: ${colCheck?.message || "none"}`);
+    debug.push(`Column check result: ${colCheck ? "FAILED" : "OK"}`);
+
+    if (colCheck) {
+      return NextResponse.json({ error: `Database error: ${colCheck.message}. Did you run the SQL to add reset_token column?`, debug }, { status: 500 });
+    }
+
+    // Find user with this reset token
+    const { data: users, error: findError } = await serviceClient
       .from("users")
       .select("id, auth_id, email, first_name, reset_token, reset_token_expiry")
       .eq("reset_token", token)
-      .single();
+      .limit(1);
 
     debug.push(`Find error: ${findError?.message || "none"}`);
+    debug.push(`Users found: ${users?.length || 0}`);
+
+    const user = users && users.length > 0 ? users[0] : null;
+
     debug.push(`User found: ${!!user}`);
     if (user) {
       debug.push(`User: ${user.email}`);
@@ -33,6 +50,21 @@ export async function POST(request: NextRequest) {
       debug.push(`Token expiry: ${user.reset_token_expiry}`);
       debug.push(`Now: ${new Date().toISOString()}`);
       debug.push(`Expired: ${user.reset_token_expiry ? new Date(user.reset_token_expiry) < new Date() : "no expiry set"}`);
+    } else {
+      // Check if any user has a non-null reset_token
+      const { data: tokenUsers, error: tokenCheckError } = await serviceClient
+        .from("users")
+        .select("id, email, reset_token")
+        .not("reset_token", "is", null)
+        .limit(5);
+      debug.push(`Token check error: ${tokenCheckError?.message || "none"}`);
+      debug.push(`Users with tokens: ${tokenUsers?.length || 0}`);
+      if (tokenUsers && tokenUsers.length > 0) {
+        tokenUsers.forEach((u, i) => {
+          debug.push(`  User ${i}: ${u.email} token=${u.reset_token?.substring(0, 16)}...`);
+        });
+        debug.push(`Looking for: ${token.substring(0, 16)}...`);
+      }
     }
 
     if (findError || !user) {
