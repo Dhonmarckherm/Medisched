@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon } from "@/components/Icons";
 
@@ -310,9 +311,9 @@ export default function Navbar({ user }: NavbarProps) {
         </div>
       )}
 
-      {/* Logout Modal */}
-      {logoutModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+      {/* Logout Modal — rendered via portal to escape fixed header */}
+      {logoutModal && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setLogoutModal(false)} />
           <div className="relative bg-white rounded-2xl p-6 w-[90%] max-w-[360px] shadow-xl animate-scale-in">
             <div className="text-center">
@@ -333,7 +334,8 @@ export default function Navbar({ user }: NavbarProps) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
