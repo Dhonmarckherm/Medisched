@@ -278,7 +278,7 @@ export default function Navbar({ user }: NavbarProps) {
 
       {/* Mobile Notification Popup */}
       {mounted && notifOpen && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
+        <div suppressHydrationWarning className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotifOpen(false)} />
           <div className="absolute top-[64px] left-2 right-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
             {/* Header */}
@@ -327,7 +327,7 @@ export default function Navbar({ user }: NavbarProps) {
 
       {/* Mobile Side Drawer */}
       {mounted && mobileOpen && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
+        <div suppressHydrationWarning className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right flex flex-col">
 
@@ -424,7 +424,7 @@ export default function Navbar({ user }: NavbarProps) {
 
       {/* Logout Modal */}
       {mounted && logoutModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+        <div suppressHydrationWarning className="fixed inset-0 z-[2000] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setLogoutModal(false)} />
           <div className="relative bg-white rounded-2xl p-6 w-[90%] max-w-[360px] shadow-xl animate-scale-in">
             <div className="text-center">

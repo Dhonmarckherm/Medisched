@@ -5,8 +5,8 @@ let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
 export function createClient() {
   if (supabaseInstance) return supabaseInstance;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   // During prerendering on Vercel, env vars may not be available yet
   // Return a dummy client that won't be used (data fetching happens in useEffect)
