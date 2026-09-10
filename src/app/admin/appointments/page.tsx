@@ -34,10 +34,29 @@ export default function ManageAppointmentsPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+    const appt = appointments.find((a) => a.id === id);
     const { error } = await supabase.from("appointments").update({ status: action }).eq("id", id);
     if (error) { addToast("error", "Failed to update"); return; }
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: action } : a)));
     addToast("success", `Appointment ${action.toLowerCase()} successfully`);
+
+    // Send email notification
+    const email = appt?.users?.email || appt?.email;
+    if (email && appt) {
+      try {
+        await fetch("/api/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "status",
+            to: email,
+            name: `${appt.firstname} ${appt.lastname}`,
+            status: action,
+            details: { requestType: "appointment", date: appt.appointment_date, purpose: appt.purpose },
+          }),
+        });
+      } catch { /* non-critical */ }
+    }
   };
 
   const filtered = useMemo(() => {

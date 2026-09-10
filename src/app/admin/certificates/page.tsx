@@ -34,10 +34,29 @@ export default function ManageCertificatesPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+    const cert = certificates.find((c) => c.id === id);
     const { error } = await supabase.from("certificates").update({ status: action }).eq("id", id);
     if (error) { addToast("error", "Failed to update"); return; }
     setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, status: action } : c)));
     addToast("success", `Certificate ${action.toLowerCase()} successfully`);
+
+    // Send email notification
+    const email = cert?.users?.email || cert?.email;
+    if (email && cert) {
+      try {
+        await fetch("/api/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "status",
+            to: email,
+            name: `${cert.firstname} ${cert.lastname}`,
+            status: action,
+            details: { requestType: "certificate", date: cert.date_needed, purpose: cert.purpose },
+          }),
+        });
+      } catch { /* non-critical */ }
+    }
   };
 
   const filtered = useMemo(() => {

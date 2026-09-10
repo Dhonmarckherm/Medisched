@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -92,6 +93,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, first_name).catch(() => {});
 
     return NextResponse.json(
       { message: "Account created successfully", user: dbUser },
