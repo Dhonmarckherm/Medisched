@@ -198,8 +198,8 @@ export default function Navbar({ user }: NavbarProps) {
                           </>
                         ) : (
                           <>
-                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Updates" description="Status changed" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
-                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Updates" description="Status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
+                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
                           </>
                         )}
                       </div>
@@ -325,8 +325,8 @@ export default function Navbar({ user }: NavbarProps) {
                 </>
               ) : (
                 <>
-                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Updates" description="Status changed" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
-                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Updates" description="Status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
+                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
                 </>
               )}
             </div>
@@ -475,20 +475,23 @@ function NavLink({ href, pathname, children }: { href: string; pathname: string;
 }
 
 /* ── Notification item ── */
-function PendingNotifItem({ supabase, table, label, description, icon, iconBg, iconColor, href, onClick, statusFilter }: {
-  supabase: any; table: string; label: string; description: string; icon: React.ReactNode; iconBg: string; iconColor: string; href: string; onClick: () => void; statusFilter?: string[];
+function PendingNotifItem({ supabase, table, label, description, icon, iconBg, iconColor, href, onClick, statusFilter, userId }: {
+  supabase: any; table: string; label: string; description: string; icon: React.ReactNode; iconBg: string; iconColor: string; href: string; onClick: () => void; statusFilter?: string[]; userId?: string | null;
 }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let query = supabase.from(table).select("id", { count: "exact", head: true });
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
     if (statusFilter) {
       query = query.in("status", statusFilter);
     } else {
       query = query.eq("status", "Pending");
     }
     query.then(({ count }: { count: number | null }) => setCount(count || 0));
-  }, [supabase, table, statusFilter]);
+  }, [supabase, table, statusFilter, userId]);
 
   if (count === 0) return null;
 
