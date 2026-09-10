@@ -226,8 +226,8 @@ export default function Navbar({ user }: NavbarProps) {
         </button>
       </div>
 
-      {/* Mobile Side Drawer */}
-      {mobileOpen && (
+      {/* Mobile Side Drawer — rendered via portal to escape fixed header */}
+      {mobileOpen && typeof document !== "undefined" && createPortal(
         <div className="fixed top-0 left-0 right-0 bottom-0 z-[999] lg:hidden">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="absolute top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-white shadow-2xl overflow-y-auto animate-slide-in-right flex flex-col">
@@ -308,7 +308,8 @@ export default function Navbar({ user }: NavbarProps) {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Logout Modal — rendered via portal to escape fixed header */}
