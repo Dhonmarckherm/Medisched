@@ -29,6 +29,11 @@ body {
 
 * { box-sizing: border-box; }
 
+/* Remove browser default focus outline on inputs */
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: none;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
