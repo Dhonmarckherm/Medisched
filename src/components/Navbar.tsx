@@ -252,8 +252,8 @@ export default function Navbar({ user }: NavbarProps) {
                 className="relative text-gray-500 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
                 style={{ minWidth: 44, minHeight: 44 }}
               >
-                <BellIcon size={20} />
-                {pendingCount > 0 && (
+                {notifOpen ? <XIcon size={20} /> : <BellIcon size={20} />}
+                {!notifOpen && pendingCount > 0 && (
                   <span className="absolute top-1 right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
                     {pendingCount > 99 ? "99+" : pendingCount}
                   </span>
