@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,10 +44,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Failed to update password: ${updateError.message}` }, { status: 500 });
     }
 
-    // Clear the reset token
+    // Also update the password_hash in the users table (used by login bcrypt check)
+    const password_hash = await bcrypt.hash(new_password, 12);
+
+    // Clear the reset token and update password hash
     await serviceClient
       .from("users")
-      .update({ reset_token: null, reset_token_expiry: null })
+      .update({ reset_token: null, reset_token_expiry: null, password_hash })
       .eq("id", user.id);
 
     return NextResponse.json({ message: "Password reset successfully" });
