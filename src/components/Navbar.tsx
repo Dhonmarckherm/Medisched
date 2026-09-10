@@ -246,18 +246,20 @@ export default function Navbar({ user }: NavbarProps) {
         {/* Mobile: Notification Bell + Menu Button */}
         <div className="flex lg:hidden items-center gap-1">
           {user && (
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="relative text-gray-500 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
-              style={{ minWidth: 44, minHeight: 44 }}
-            >
-              <BellIcon size={20} />
-              {pendingCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                  {pendingCount > 99 ? "99+" : pendingCount}
-                </span>
-              )}
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => { setNotifOpen(!notifOpen); }}
+                className="relative text-gray-500 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
+                style={{ minWidth: 44, minHeight: 44 }}
+              >
+                <BellIcon size={20} />
+                {pendingCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                )}
+              </button>
+            </div>
           )}
           <button
             className="lg:hidden text-gray-600 bg-transparent border-none cursor-pointer p-2.5 rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors"
@@ -269,6 +271,55 @@ export default function Navbar({ user }: NavbarProps) {
         </div>
       </div>
     </header>
+
+      {/* Mobile Notification Popup */}
+      {mounted && notifOpen && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-[1100] lg:hidden">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setNotifOpen(false)} />
+          <div className="absolute top-[64px] left-2 right-2 bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+            {/* Header */}
+            <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <div>
+                <h3 className="text-[14px] font-semibold text-[#111] m-0 leading-tight">Notifications</h3>
+                <p className="text-[12px] text-gray-400 mt-0.5 mb-0">
+                  {isAdminOrNurse ? "Items needing your review" : "Updates on your requests"}
+                </p>
+              </div>
+              {pendingCount > 0 && (
+                <span className="bg-red-50 text-red-600 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
+            </div>
+            {/* Body */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              {pendingCount === 0 ? (
+                <div className="py-10 flex flex-col items-center">
+                  <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
+                    <BellIcon size={20} className="text-gray-300" />
+                  </div>
+                  <p className="text-[13px] font-medium text-gray-500 m-0">
+                    {isAdminOrNurse ? "All caught up" : "No new updates"}
+                  </p>
+                  <p className="text-[12px] text-gray-300 mt-0.5 m-0">
+                    {isAdminOrNurse ? "Nothing pending right now" : "We'll notify you here"}
+                  </p>
+                </div>
+              ) : isAdminOrNurse ? (
+                <>
+                  <PendingNotifItem supabase={supabase} table="appointments" label="Pending Appointments" description="Awaiting your decision" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/pending" onClick={() => setNotifOpen(false)} />
+                  <PendingNotifItem supabase={supabase} table="certificates" label="Pending Certificates" description="Ready for review" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/pending" onClick={() => setNotifOpen(false)} />
+                </>
+              ) : (
+                <>
+                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Updates" description="Status changed" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Updates" description="Status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Side Drawer */}
       {mounted && mobileOpen && (
