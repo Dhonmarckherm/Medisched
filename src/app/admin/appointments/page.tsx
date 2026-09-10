@@ -7,7 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
-import { CheckCircleIcon, XCircleIcon, CalendarIcon } from "@/components/Icons";
+import { CheckCircleIcon, XCircleIcon, CalendarIcon, TrashIcon } from "@/components/Icons";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -59,6 +59,19 @@ export default function ManageAppointmentsPage() {
         });
       } catch { /* non-critical */ }
     }
+    setActionLoadingId(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this appointment? This cannot be undone.")) return;
+    setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/delete?id=${id}&type=appointment`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to delete"); setActionLoadingId(null); return; }
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+      addToast("success", "Appointment deleted permanently");
+    } catch { addToast("error", "An unexpected error occurred"); }
     setActionLoadingId(null);
   };
 
@@ -152,18 +165,24 @@ export default function ManageAppointmentsPage() {
                       <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden lg:table-cell">{appt.purpose}</td>
                       <td className="py-3 px-4"><StatusBadge status={appt.status} /></td>
                       <td className="py-3 px-4">
-                        {appt.status === "Pending" && (
-                          <div className="flex gap-1.5">
-                            <button onClick={() => handleAction(appt.id, "Approved")} disabled={actionLoadingId === appt.id}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                              {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === appt.id ? "Approving..." : "Approve"}
-                            </button>
-                            <button onClick={() => handleAction(appt.id, "Rejected")} disabled={actionLoadingId === appt.id}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                              <XCircleIcon size={14} /> Reject
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-1.5">
+                          {appt.status === "Pending" && (
+                            <>
+                              <button onClick={() => handleAction(appt.id, "Approved")} disabled={actionLoadingId === appt.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === appt.id ? "Approving..." : "Approve"}
+                              </button>
+                              <button onClick={() => handleAction(appt.id, "Rejected")} disabled={actionLoadingId === appt.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                <XCircleIcon size={14} /> Reject
+                              </button>
+                            </>
+                          )}
+                          <button onClick={() => handleDelete(appt.id)} disabled={actionLoadingId === appt.id}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-50 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <TrashIcon size={14} />} Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { useToast } from "@/components/Toast";
-import { CheckCircleIcon, XCircleIcon, CalendarIcon, CertificateIcon, CheckSquareIcon } from "@/components/Icons";
+import { CheckCircleIcon, XCircleIcon, CalendarIcon, CertificateIcon, CheckSquareIcon, TrashIcon } from "@/components/Icons";
 
 export default function PendingListPage() {
   const [user, setUser] = useState<any>(null);
@@ -83,6 +83,23 @@ export default function PendingListPage() {
       setPendingCerts((prev) => prev.filter((c) => c.id !== id));
     }
     addToast("success", `${type === "appointment" ? "Appointment" : "Certificate"} ${action.toLowerCase()} successfully`);
+    setActionLoadingId(null);
+  };
+
+  const handleDelete = async (id: string, type: "appointment" | "certificate") => {
+    if (!confirm(`Are you sure you want to permanently delete this ${type}? This cannot be undone.`)) return;
+    setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/delete?id=${id}&type=${type}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to delete"); setActionLoadingId(null); return; }
+      if (type === "appointment") {
+        setPendingAppts((prev) => prev.filter((a) => a.id !== id));
+      } else {
+        setPendingCerts((prev) => prev.filter((c) => c.id !== id));
+      }
+      addToast("success", `${type === "appointment" ? "Appointment" : "Certificate"} deleted permanently`);
+    } catch { addToast("error", "An unexpected error occurred"); }
     setActionLoadingId(null);
   };
 
@@ -301,6 +318,11 @@ export default function PendingListPage() {
                                 title="Reject">
                                 <XCircleIcon size={14} /> Reject
                               </button>
+                              <button onClick={() => handleDelete(appt.id, "appointment")} disabled={actionLoadingId === appt.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-50 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Delete">
+                                {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <TrashIcon size={14} />} Delete
+                              </button>
                             </div>
                           </td>
                         )}
@@ -363,6 +385,11 @@ export default function PendingListPage() {
                               <button onClick={() => handleAction(cert.id, "certificate", "Rejected")} disabled={actionLoadingId === cert.id}
                                 className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                 <XCircleIcon size={14} /> Reject
+                              </button>
+                              <button onClick={() => handleDelete(cert.id, "certificate")} disabled={actionLoadingId === cert.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-50 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Delete">
+                                {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <TrashIcon size={14} />} Delete
                               </button>
                             </div>
                           </td>

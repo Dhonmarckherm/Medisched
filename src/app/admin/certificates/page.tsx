@@ -7,7 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
-import { CheckCircleIcon, XCircleIcon, CertificateIcon } from "@/components/Icons";
+import { CheckCircleIcon, XCircleIcon, CertificateIcon, TrashIcon } from "@/components/Icons";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -59,6 +59,19 @@ export default function ManageCertificatesPage() {
         });
       } catch { /* non-critical */ }
     }
+    setActionLoadingId(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this certificate? This cannot be undone.")) return;
+    setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/admin/delete?id=${id}&type=certificate`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to delete"); setActionLoadingId(null); return; }
+      setCertificates((prev) => prev.filter((c) => c.id !== id));
+      addToast("success", "Certificate deleted permanently");
+    } catch { addToast("error", "An unexpected error occurred"); }
     setActionLoadingId(null);
   };
 
@@ -152,18 +165,24 @@ export default function ManageCertificatesPage() {
                       <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden lg:table-cell">{cert.purpose}</td>
                       <td className="py-3 px-4"><StatusBadge status={cert.status} /></td>
                       <td className="py-3 px-4">
-                        {cert.status === "Pending" && (
-                          <div className="flex gap-1.5">
-                            <button onClick={() => handleAction(cert.id, "Approved")} disabled={actionLoadingId === cert.id}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                              {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === cert.id ? "Approving..." : "Approve"}
-                            </button>
-                            <button onClick={() => handleAction(cert.id, "Rejected")} disabled={actionLoadingId === cert.id}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                              <XCircleIcon size={14} /> Reject
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-1.5">
+                          {cert.status === "Pending" && (
+                            <>
+                              <button onClick={() => handleAction(cert.id, "Approved")} disabled={actionLoadingId === cert.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === cert.id ? "Approving..." : "Approve"}
+                              </button>
+                              <button onClick={() => handleAction(cert.id, "Rejected")} disabled={actionLoadingId === cert.id}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                <XCircleIcon size={14} /> Reject
+                              </button>
+                            </>
+                          )}
+                          <button onClick={() => handleDelete(cert.id)} disabled={actionLoadingId === cert.id}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-50 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <TrashIcon size={14} />} Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
