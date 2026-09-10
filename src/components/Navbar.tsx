@@ -82,19 +82,17 @@ export default function Navbar({ user }: NavbarProps) {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:block">
-          <ul className="flex list-none gap-8 items-center m-0 p-0">
-            <li><Link href="/" className="nav-link">Home</Link></li>
+          <ul className="flex list-none gap-5 items-center m-0 p-0">
+            {!user && <li><Link href="/" className="nav-link">Home</Link></li>}
             {user ? (
               <>
                 <li><Link href="/dashboard" className="nav-link">Dashboard</Link></li>
                 <li><Link href="/appointments" className="nav-link">Appointments</Link></li>
                 <li><Link href="/certificates" className="nav-link">Certificates</Link></li>
-                <li><Link href="/schedule" className="nav-link">Schedule</Link></li>
-                                <li><Link href="/calendar" className="nav-link">Calendar</Link></li>
+                <li><Link href="/calendar" className="nav-link">Calendar</Link></li>
                 {isAdminOrNurse && (
                   <>
                     <li><Link href="/pending" className="nav-link">Pending</Link></li>
-                    <li><Link href="/admin" className="nav-link">Admin</Link></li>
                     <li><Link href="/admin/analytics" className="nav-link">Analytics</Link></li>
                   </>
                 )}
@@ -258,24 +256,23 @@ export default function Navbar({ user }: NavbarProps) {
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
-              {/* Main */}
-              <SidebarLink href="/" icon={<HomeIcon size={20} />} label="Home" pathname={pathname} onClick={() => setMobileOpen(false)} />
+              {!user && (
+                <SidebarLink href="/" icon={<HomeIcon size={20} />} label="Home" pathname={pathname} onClick={() => setMobileOpen(false)} />
+              )}
               
               {user ? (
                 <>
                   <SidebarLink href="/dashboard" icon={<DashboardIcon size={20} />} label="Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/appointments" icon={<CalendarIcon size={20} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
-                  <SidebarLink href="/schedule" icon={<ClockIcon size={20} />} label="Schedule" pathname={pathname} onClick={() => setMobileOpen(false)} />
-                                    <SidebarLink href="/calendar" icon={<CalendarIcon size={20} />} label="Calendar" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href="/calendar" icon={<ClockIcon size={20} />} label="Calendar" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/profile" icon={<UserIcon size={20} />} label="Profile" pathname={pathname} onClick={() => setMobileOpen(false)} />
 
                   {isAdminOrNurse && (
                     <>
                       <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
                       <SidebarLink href="/pending" icon={<BellIcon size={20} />} label="Pending" pathname={pathname} onClick={() => setMobileOpen(false)} badge={pendingCount} />
-                      <SidebarLink href="/admin" icon={<ShieldIcon size={20} />} label="Admin Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
-                      <SidebarLink href="/admin/analytics" icon={<DashboardIcon size={20} />} label="Analytics" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                      <SidebarLink href="/admin/analytics" icon={<ShieldIcon size={20} />} label="Analytics" pathname={pathname} onClick={() => setMobileOpen(false)} />
                     </>
                   )}
                 </>
