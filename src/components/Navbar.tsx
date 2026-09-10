@@ -41,6 +41,15 @@ export default function Navbar({ user }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [avatarOpen]);
 
+  // Cache student user_id to avoid repeated lookups
+  const [studentId, setStudentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user || isAdminOrNurse) return;
+    supabase.from("users").select("id").eq("auth_id", user.id).single()
+      .then(({ data }: { data: { id: string } | null }) => { if (data) setStudentId(data.id); });
+  }, [user, isAdminOrNurse, supabase]);
+
   // Fetch notification counts + realtime subscription
   useEffect(() => {
     if (!user) return;
@@ -52,33 +61,33 @@ export default function Navbar({ user }: NavbarProps) {
           supabase.from("certificates").select("id", { count: "exact", head: true }).eq("status", "Pending"),
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
-      } else if (user) {
-        const { data: userData } = await supabase.from("users").select("id").eq("auth_id", user.id).single();
-        if (userData) {
-          const [appts, certs] = await Promise.all([
-            supabase.from("appointments").select("id", { count: "exact", head: true })
-              .eq("user_id", userData.id)
-              .in("status", ["Approved", "Rejected", "Completed"]),
-            supabase.from("certificates").select("id", { count: "exact", head: true })
-              .eq("user_id", userData.id)
-              .in("status", ["Approved", "Rejected", "Completed"]),
-          ]);
-          setPendingCount((appts.count || 0) + (certs.count || 0));
-        }
+      } else if (studentId) {
+        const [appts, certs] = await Promise.all([
+          supabase.from("appointments").select("id", { count: "exact", head: true })
+            .eq("user_id", studentId)
+            .in("status", ["Approved", "Rejected", "Completed"]),
+          supabase.from("certificates").select("id", { count: "exact", head: true })
+            .eq("user_id", studentId)
+            .in("status", ["Approved", "Rejected", "Completed"]),
+        ]);
+        setPendingCount((appts.count || 0) + (certs.count || 0));
       }
     }
 
     fetchNotifications();
 
-    // Subscribe to realtime changes for instant updates
+    // Subscribe to realtime changes — unique channel per user
+    const channelName = `notifs-${user.id}-${Date.now()}`;
     const channel = supabase
-      .channel("navbar-notifs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => fetchNotifications())
-      .on("postgres_changes", { event: "*", schema: "public", table: "certificates" }, () => fetchNotifications())
+      .channel(channelName)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "appointments" }, () => fetchNotifications())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "certificates" }, () => fetchNotifications())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "appointments" }, () => fetchNotifications())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "certificates" }, () => fetchNotifications())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, isAdminOrNurse, supabase]);
+  }, [user, isAdminOrNurse, studentId, supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
