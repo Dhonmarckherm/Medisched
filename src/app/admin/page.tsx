@@ -33,31 +33,30 @@ export default async function AdminDashboardPage() {
   ]);
 
   const isAdmin = dbUser.role === "admin";
+  const pendingTotal = (pendingAppointments ?? 0) + (pendingCertificates ?? 0);
 
   return (
-    <div className="min-h-screen bg-[#f8faf9]">
+    <div className="min-h-screen bg-[#fafbfc]">
       <Navbar user={dbUser} />
-      <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-primary to-emerald-600 rounded-2xl p-6 sm:p-8 mb-8 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
-          <div className="absolute bottom-0 left-1/2 w-[120px] h-[120px] bg-white/5 rounded-full translate-y-1/2"></div>
-          <div className="relative z-10">
-            <h1 className="text-[24px] sm:text-[28px] font-bold mb-1">
-              Admin Dashboard
-            </h1>
-            <p className="text-white/80 text-[14px] mb-4">
-              Welcome, {dbUser.first_name} {dbUser.last_name} &middot; <span className="capitalize font-medium">{dbUser.role}</span>
-            </p>
-            <div className="flex flex-wrap gap-3">
+      <main className="pt-[100px] pb-12 w-[92%] max-w-[1240px] mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <p className="text-[13px] text-gray-400 font-medium mb-1">Admin Overview</p>
+              <h1 className="text-[26px] font-bold text-[#111] tracking-tight m-0">
+                Good day, {dbUser.first_name}
+              </h1>
+            </div>
+            <div className="flex gap-2">
               <Link href="/pending"
-                className="inline-flex items-center gap-2 bg-white text-primary px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-white/90 transition">
-                View Pending <ArrowRightIcon size={16} />
+                className="inline-flex items-center gap-1.5 bg-[#111] text-white px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-[#222] transition">
+                View Pending <ArrowRightIcon size={14} />
               </Link>
               {isAdmin && (
                 <Link href="/admin/users"
-                  className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-white/25 transition border border-white/20">
-                  <UsersIcon size={16} /> Manage Users
+                  className="inline-flex items-center gap-1.5 bg-white text-[#333] px-4 py-2 rounded-lg no-underline text-[13px] font-medium hover:bg-gray-50 transition border border-gray-200">
+                  <UsersIcon size={14} /> Users
                 </Link>
               )}
             </div>
@@ -65,118 +64,154 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="Total Students" value={totalStudents ?? 0} icon={<UsersIcon size={20} />} color="blue" />
-          <StatCard title="Total Appointments" value={totalAppointments ?? 0} icon={<CalendarIcon size={20} />} color="green" />
-          <StatCard title="Total Certificates" value={totalCertificates ?? 0} icon={<CertificateIcon size={20} />} color="purple" />
-          <StatCard title="Pending Items" value={(pendingAppointments ?? 0) + (pendingCertificates ?? 0)} icon={<ClockIcon size={20} />} color="amber" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <StatCard title="Students" value={totalStudents ?? 0} icon={<UsersIcon size={18} />} color="blue" />
+          <StatCard title="Appointments" value={totalAppointments ?? 0} icon={<CalendarIcon size={18} />} color="green" />
+          <StatCard title="Certificates" value={totalCertificates ?? 0} icon={<CertificateIcon size={18} />} color="purple" />
+          <StatCard title="Pending" value={pendingTotal} icon={<ClockIcon size={18} />} color="amber" />
         </div>
 
-        {/* Management Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Link href="/admin/appointments" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-              <CalendarIcon size={20} />
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <Link href="/admin/appointments" className="group flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 no-underline hover:border-gray-200 transition-all duration-150">
+            <div className="w-9 h-9 rounded-[10px] bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+              <CalendarIcon size={18} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Appointments</p>
-            <p className="text-gray-400 text-[13px] mt-1">Manage all appointments</p>
-            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+            <div className="min-w-0">
+              <p className="font-medium text-[#111] text-[14px] m-0">Appointments</p>
+              <p className="text-gray-400 text-[12px] m-0 mt-0.5">Manage all</p>
+            </div>
           </Link>
-          <Link href="/admin/certificates" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
-              <CertificateIcon size={20} />
+          <Link href="/admin/certificates" className="group flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 no-underline hover:border-gray-200 transition-all duration-150">
+            <div className="w-9 h-9 rounded-[10px] bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
+              <CertificateIcon size={18} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Certificates</p>
-            <p className="text-gray-400 text-[13px] mt-1">Manage all certificates</p>
-            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+            <div className="min-w-0">
+              <p className="font-medium text-[#111] text-[14px] m-0">Certificates</p>
+              <p className="text-gray-400 text-[12px] m-0 mt-0.5">Manage all</p>
+            </div>
           </Link>
-          <Link href="/calendar" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
-              <CalendarIcon size={20} />
+          <Link href="/calendar" className="group flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 no-underline hover:border-gray-200 transition-all duration-150">
+            <div className="w-9 h-9 rounded-[10px] bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <CalendarIcon size={18} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Calendar</p>
-            <p className="text-gray-400 text-[13px] mt-1">Visual appointment schedule</p>
-            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+            <div className="min-w-0">
+              <p className="font-medium text-[#111] text-[14px] m-0">Calendar</p>
+              <p className="text-gray-400 text-[12px] m-0 mt-0.5">Schedule view</p>
+            </div>
           </Link>
-          <Link href="/admin/analytics" className="bg-white p-6 rounded-xl border border-gray-100 no-underline hover:border-primary/30 hover:shadow-sm transition-all duration-200 group">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 mb-4">
-              <ChartIcon size={20} />
+          <Link href="/admin/analytics" className="group flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 no-underline hover:border-gray-200 transition-all duration-150">
+            <div className="w-9 h-9 rounded-[10px] bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
+              <ChartIcon size={18} />
             </div>
-            <p className="font-medium text-[#1a1a2e] text-[15px]">Analytics</p>
-            <p className="text-gray-400 text-[13px] mt-1">Usage insights & reports</p>
-            <ArrowRightIcon size={16} className="text-gray-300 mt-3 group-hover:text-primary transition" />
+            <div className="min-w-0">
+              <p className="font-medium text-[#111] text-[14px] m-0">Analytics</p>
+              <p className="text-gray-400 text-[12px] m-0 mt-0.5">Insights</p>
+            </div>
           </Link>
         </div>
 
         {/* Pending Tables */}
-        <div className="bg-white rounded-xl border border-gray-100 mb-6 overflow-hidden">
-          <div className="flex justify-between items-center p-6 pb-4">
-            <h2 className="text-[16px] font-semibold text-[#1a1a2e]">Pending Appointments</h2>
-            <Link href="/admin/appointments" className="text-[13px] text-primary no-underline font-medium hover:underline flex items-center gap-1">
-              View All <ArrowRightIcon size={14} />
-            </Link>
-          </div>
-          {(!pendingAppts || pendingAppts.length === 0) ? (
-            <p className="text-gray-400 text-center py-8 text-[14px]">No pending appointments</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Date</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Purpose</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingAppts.map((appt: any) => (
-                    <tr key={appt.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                      <td className="py-3 px-4 text-[14px] text-gray-700">{appt.firstname} {appt.lastname}</td>
-                      <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{new Date(appt.appointment_date).toLocaleDateString()}</td>
-                      <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden md:table-cell">{appt.purpose}</td>
-                      <td className="py-3 px-4"><StatusBadge status={appt.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Pending Appointments */}
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="flex justify-between items-center px-5 pt-5 pb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-[#111] m-0">Pending Appointments</h2>
+                {(pendingAppts?.length ?? 0) > 0 && (
+                  <span className="bg-amber-50 text-amber-700 text-[11px] font-semibold px-1.5 py-0.5 rounded-md">{pendingAppts?.length}</span>
+                )}
+              </div>
+              <Link href="/admin/appointments" className="text-[12px] text-gray-400 no-underline font-medium hover:text-[#111] transition flex items-center gap-0.5">
+                View all <ArrowRightIcon size={12} />
+              </Link>
             </div>
-          )}
-        </div>
+            {(!pendingAppts || pendingAppts.length === 0) ? (
+              <div className="px-5 pb-8 pt-2">
+                <div className="bg-gray-50/80 rounded-lg py-8 flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                    <CalendarIcon size={18} className="text-gray-300" />
+                  </div>
+                  <p className="text-gray-400 text-[13px] m-0">All clear</p>
+                  <p className="text-gray-300 text-[12px] m-0 mt-0.5">No pending appointments</p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-50">
+                      <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Student</th>
+                      <th className="text-left py-2.5 px-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                      <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingAppts.map((appt: any) => (
+                      <tr key={appt.id} className="border-b border-gray-50/80 last:border-0 hover:bg-gray-50/40 transition">
+                        <td className="py-3 px-5">
+                          <p className="text-[13px] text-[#111] font-medium m-0">{appt.firstname} {appt.lastname}</p>
+                          <p className="text-[12px] text-gray-400 m-0 mt-0.5 truncate max-w-[160px]">{appt.purpose}</p>
+                        </td>
+                        <td className="py-3 px-4 text-[13px] text-gray-500 hidden sm:table-cell">{new Date(appt.appointment_date).toLocaleDateString()}</td>
+                        <td className="py-3 px-5"><StatusBadge status={appt.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="flex justify-between items-center p-6 pb-4">
-            <h2 className="text-[16px] font-semibold text-[#1a1a2e]">Pending Certificates</h2>
-            <Link href="/admin/certificates" className="text-[13px] text-primary no-underline font-medium hover:underline flex items-center gap-1">
-              View All <ArrowRightIcon size={14} />
-            </Link>
-          </div>
-          {(!pendingCerts || pendingCerts.length === 0) ? (
-            <p className="text-gray-400 text-center py-8 text-[14px]">No pending certificates</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Date Needed</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Purpose</th>
-                    <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingCerts.map((cert: any) => (
-                    <tr key={cert.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                      <td className="py-3 px-4 text-[14px] text-gray-700">{cert.firstname} {cert.lastname}</td>
-                      <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{new Date(cert.date_needed).toLocaleDateString()}</td>
-                      <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate hidden md:table-cell">{cert.purpose}</td>
-                      <td className="py-3 px-4"><StatusBadge status={cert.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Pending Certificates */}
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="flex justify-between items-center px-5 pt-5 pb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-[#111] m-0">Pending Certificates</h2>
+                {(pendingCerts?.length ?? 0) > 0 && (
+                  <span className="bg-amber-50 text-amber-700 text-[11px] font-semibold px-1.5 py-0.5 rounded-md">{pendingCerts?.length}</span>
+                )}
+              </div>
+              <Link href="/admin/certificates" className="text-[12px] text-gray-400 no-underline font-medium hover:text-[#111] transition flex items-center gap-0.5">
+                View all <ArrowRightIcon size={12} />
+              </Link>
             </div>
-          )}
+            {(!pendingCerts || pendingCerts.length === 0) ? (
+              <div className="px-5 pb-8 pt-2">
+                <div className="bg-gray-50/80 rounded-lg py-8 flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                    <CertificateIcon size={18} className="text-gray-300" />
+                  </div>
+                  <p className="text-gray-400 text-[13px] m-0">All clear</p>
+                  <p className="text-gray-300 text-[12px] m-0 mt-0.5">No pending certificates</p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-50">
+                      <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Student</th>
+                      <th className="text-left py-2.5 px-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Date Needed</th>
+                      <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingCerts.map((cert: any) => (
+                      <tr key={cert.id} className="border-b border-gray-50/80 last:border-0 hover:bg-gray-50/40 transition">
+                        <td className="py-3 px-5">
+                          <p className="text-[13px] text-[#111] font-medium m-0">{cert.firstname} {cert.lastname}</p>
+                          <p className="text-[12px] text-gray-400 m-0 mt-0.5 truncate max-w-[160px]">{cert.purpose}</p>
+                        </td>
+                        <td className="py-3 px-4 text-[13px] text-gray-500 hidden sm:table-cell">{new Date(cert.date_needed).toLocaleDateString()}</td>
+                        <td className="py-3 px-5"><StatusBadge status={cert.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
