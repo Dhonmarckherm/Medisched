@@ -45,6 +45,17 @@ export default function NewAppointmentPage() {
   return (
     <div className="min-h-screen" style={{ background: "#f5f8fb" }}>
       <Navbar user={user} />
+      {/* Loading overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center">
+          <div className="bg-white rounded-xl px-8 py-6 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-[3px] border-gray-200 border-t-primary rounded-full" style={{ animation: "spin 0.8s linear infinite" }} />
+            <p className="text-[14px] font-medium text-gray-600 m-0">Submitting appointment...</p>
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       <main className="pt-[100px] pb-10 flex justify-center">
         <div className="w-[900px] max-w-full bg-white border-[3px] border-primary rounded-[20px] overflow-hidden shadow-lg">
           {/* Form Header */}
