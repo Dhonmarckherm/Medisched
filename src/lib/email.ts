@@ -42,34 +42,41 @@ function baseLayout(title: string, content: string) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
-<body style="margin:0;padding:0;background:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8;padding:40px 20px">
+<body style="margin:0;padding:0;background:#f8faf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faf9;padding:48px 20px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden">
+
+<!-- Logo Bar -->
 <tr>
-<td style="background:#84B179;padding:28px 36px;text-align:center">
+<td style="padding:32px 40px 28px;text-align:center;background:linear-gradient(135deg,#84B179 0%,#5a9a6e 100%)">
 <table width="100%" cellpadding="0" cellspacing="0">
-<tr>
-<td style="text-align:center">
-<div style="display:inline-block;background:rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;margin-bottom:8px">
-<span style="color:#fff;font-size:18px;font-weight:700;letter-spacing:-0.3px">MEDISCHED <span style="opacity:0.8">CERT</span></span>
+<tr><td style="text-align:center">
+<div style="display:inline-block;width:44px;height:44px;background:rgba(255,255,255,0.2);border-radius:12px;line-height:44px;text-align:center;margin-bottom:12px">
+<span style="color:#fff;font-size:22px">&#9764;</span>
 </div>
-</td>
-</tr>
+<div style="color:#fff;font-size:20px;font-weight:700;letter-spacing:0.5px;margin:0">MEDISCHED CERT</div>
+<div style="color:rgba(255,255,255,0.7);font-size:12px;margin:4px 0 0;letter-spacing:0.3px">Clinic Management System</div>
+</td></tr>
 </table>
 </td>
 </tr>
+
+<!-- Content -->
 <tr>
-<td style="padding:36px">
+<td style="padding:40px">
 ${content}
 </td>
 </tr>
+
+<!-- Footer -->
 <tr>
-<td style="padding:20px 36px;background:#f9fafb;text-align:center;border-top:1px solid #eee">
-<p style="margin:0;font-size:12px;color:#999">Philippine Standard University &middot; Clinic Management System</p>
-<p style="margin:4px 0 0;font-size:11px;color:#bbb">This is an automated message. Please do not reply to this email.</p>
+<td style="padding:24px 40px;background:#fafbfc;text-align:center;border-top:1px solid #f0f0f0">
+<p style="margin:0;font-size:12px;color:#999;letter-spacing:0.2px">Philippine Standard University</p>
+<p style="margin:6px 0 0;font-size:11px;color:#bbb">This is an automated email. Please do not reply.</p>
 </td>
 </tr>
+
 </table>
 </td></tr>
 </table>
@@ -79,67 +86,136 @@ ${content}
 
 function welcomeEmail(name: string) {
   return baseLayout("Welcome to MEDISCHED CERT", `
-<h1 style="margin:0 0 8px;font-size:22px;color:#1a1a2e">Welcome, ${name}!</h1>
-<p style="margin:0 0 20px;font-size:15px;color:#555;line-height:1.6">
-Your account has been created successfully. You can now book appointments and request certificates from the university clinic.
+<div style="margin-bottom:28px">
+<h1 style="margin:0 0 10px;font-size:24px;color:#111;font-weight:700;letter-spacing:-0.3px">Welcome, ${name}!</h1>
+<p style="margin:0;font-size:15px;color:#666;line-height:1.7">
+Your account has been created. You're all set to use the clinic management system.
 </p>
-<table cellpadding="0" cellspacing="0" style="margin:24px 0">
+</div>
+
+<!-- Feature Cards -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
 <tr>
-<td style="padding:12px 16px;background:#f0faf0;border-radius:8px;font-size:14px;color:#333">
-<strong>What you can do:</strong>
-<ul style="margin:8px 0 0;padding-left:20px;color:#555;line-height:1.8">
-<li>Book clinic appointments</li>
-<li>Request medical certificates</li>
-<li>Track your request status in real-time</li>
-<li>Download approved certificates as PDF</li>
-</ul>
+<td style="padding:16px 20px;background:#f8faf9;border-radius:12px;border:1px solid #f0f0f0">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td style="width:36px;vertical-align:top;padding-right:14px">
+<div style="width:36px;height:36px;background:#e8f5e9;border-radius:10px;line-height:36px;text-align:center;font-size:16px">&#128197;</div>
+</td>
+<td>
+<p style="margin:0;font-size:14px;font-weight:600;color:#111">Book Appointments</p>
+<p style="margin:3px 0 0;font-size:13px;color:#888;line-height:1.5">Schedule visits to the university clinic</p>
 </td>
 </tr>
 </table>
-<p style="margin:0;font-size:14px;color:#555">
-Log in to your dashboard to get started.
+</td>
+</tr>
+<tr><td style="height:10px"></td></tr>
+<tr>
+<td style="padding:16px 20px;background:#f8faf9;border-radius:12px;border:1px solid #f0f0f0">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td style="width:36px;vertical-align:top;padding-right:14px">
+<div style="width:36px;height:36px;background:#f3e5f5;border-radius:10px;line-height:36px;text-align:center;font-size:16px">&#128196;</div>
+</td>
+<td>
+<p style="margin:0;font-size:14px;font-weight:600;color:#111">Request Certificates</p>
+<p style="margin:3px 0 0;font-size:13px;color:#888;line-height:1.5">Get medical certificates as PDF</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr><td style="height:10px"></td></tr>
+<tr>
+<td style="padding:16px 20px;background:#f8faf9;border-radius:12px;border:1px solid #f0f0f0">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td style="width:36px;vertical-align:top;padding-right:14px">
+<div style="width:36px;height:36px;background:#e3f2fd;border-radius:10px;line-height:36px;text-align:center;font-size:16px">&#128269;</div>
+</td>
+<td>
+<p style="margin:0;font-size:14px;font-weight:600;color:#111">Track in Real-Time</p>
+<p style="margin:3px 0 0;font-size:13px;color:#888;line-height:1.5">Monitor your request status anytime</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p style="margin:0;font-size:14px;color:#666;line-height:1.6">
+Log in to your dashboard to get started. If you have any questions, feel free to visit the clinic.
 </p>
   `);
 }
 
 function statusEmail(name: string, type: "appointment" | "certificate", status: "Approved" | "Rejected", details: { date?: string; purpose?: string }) {
   const isApproved = status === "Approved";
-  const accentColor = isApproved ? "#22c55e" : "#ef4444";
-  const bgLight = isApproved ? "#f0faf0" : "#fef2f2";
-  const statusText = isApproved ? "has been approved" : "has been rejected";
-  const icon = isApproved ? "✓" : "✕";
+  const accent = isApproved ? "#22c55e" : "#ef4444";
+  const accentBg = isApproved ? "#f0fdf4" : "#fef2f2";
+  const accentBorder = isApproved ? "#bbf7d0" : "#fecaca";
+  const verb = isApproved ? "has been approved" : "has been rejected";
+  const symbol = isApproved ? "&#10003;" : "&#10007;";
+  const typeLabel = type === "appointment" ? "Appointment" : "Certificate";
 
-  return baseLayout(`${type === "appointment" ? "Appointment" : "Certificate"} ${status}`, `
-<h1 style="margin:0 0 8px;font-size:22px;color:#1a1a2e">Hi ${name},</h1>
-<p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6">
-Your ${type} request ${statusText}.
+  return baseLayout(`${typeLabel} ${status}`, `
+<div style="margin-bottom:28px">
+<h1 style="margin:0 0 10px;font-size:24px;color:#111;font-weight:700;letter-spacing:-0.3px">Hi ${name},</h1>
+<p style="margin:0;font-size:15px;color:#666;line-height:1.7">
+Your ${type.toLowerCase()} request ${verb}. Here's the summary:
 </p>
-<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px">
+</div>
+
+<!-- Status Card -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
 <tr>
-<td style="padding:20px;background:${bgLight};border-radius:10px;text-align:center">
-<div style="display:inline-block;width:48px;height:48px;border-radius:50%;background:${accentColor};color:#fff;font-size:24px;line-height:48px;text-align:center;font-weight:bold;margin-bottom:8px">${icon}</div>
-<p style="margin:0;font-size:18px;font-weight:700;color:${accentColor}">${status}</p>
+<td style="padding:28px;background:${accentBg};border-radius:14px;text-align:center;border:1px solid ${accentBorder}">
+<div style="display:inline-block;width:52px;height:52px;border-radius:50%;background:${accent};color:#fff;font-size:26px;line-height:52px;text-align:center;font-weight:bold;margin-bottom:10px">${symbol}</div>
+<p style="margin:0;font-size:20px;font-weight:700;color:${accent};letter-spacing:-0.3px">${status}</p>
+<p style="margin:4px 0 0;font-size:13px;color:#888">${typeLabel} request</p>
 </td>
 </tr>
 </table>
-<table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px;border:1px solid #eee;border-radius:8px;overflow:hidden">
+
+<!-- Details -->
+${(details.date || details.purpose) ? `
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border:1px solid #f0f0f0;border-radius:12px;overflow:hidden">
 ${details.date ? `<tr>
-<td style="padding:12px 16px;border-bottom:1px solid #eee;font-size:13px;color:#888;width:120px">${type === "appointment" ? "Date" : "Date Needed"}</td>
-<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500">${details.date}</td>
+<td style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:12px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;width:110px;vertical-align:top">${type === "appointment" ? "Date" : "Needed By"}</td>
+<td style="padding:14px 18px;border-bottom:1px solid #f5f5f5;font-size:14px;color:#111;font-weight:500">${details.date}</td>
 </tr>` : ""}
 ${details.purpose ? `<tr>
-<td style="padding:12px 16px;font-size:13px;color:#888;width:120px">Purpose</td>
-<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500">${details.purpose}</td>
+<td style="padding:14px 18px;font-size:12px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;width:110px;vertical-align:top">Purpose</td>
+<td style="padding:14px 18px;font-size:14px;color:#111;font-weight:500">${details.purpose}</td>
 </tr>` : ""}
 </table>
+` : ""}
+
 ${isApproved && type === "certificate" ? `
-<p style="margin:0 0 8px;font-size:14px;color:#555;line-height:1.6">
-You can now download your certificate from the <strong>Certificates</strong> page in your dashboard.
-</p>` : ""}
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+<tr>
+<td style="padding:16px 20px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0">
+<p style="margin:0;font-size:14px;color:#166534;line-height:1.6">
+<strong>Your certificate is ready!</strong><br>
+<span style="color:#666">Download it from the <strong>Certificates</strong> page in your dashboard.</span>
+</p>
+</td>
+</tr>
+</table>
+` : ""}
+
 ${!isApproved ? `
-<p style="margin:0 0 8px;font-size:14px;color:#555;line-height:1.6">
-If you have questions, please visit the clinic or contact the admin.
-</p>` : ""}
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+<tr>
+<td style="padding:16px 20px;background:#fef2f2;border-radius:12px;border:1px solid #fecaca">
+<p style="margin:0;font-size:14px;color:#991b1b;line-height:1.6">
+If you believe this is a mistake, please visit the clinic or contact the admin for assistance.
+</p>
+</td>
+</tr>
+</table>
+` : ""}
   `);
 }
 
