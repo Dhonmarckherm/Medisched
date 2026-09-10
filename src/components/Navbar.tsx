@@ -28,7 +28,17 @@ export default function Navbar({ user }: NavbarProps) {
   const avatarRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  // Track when student last viewed notifications (clears them on click)
+  const [lastViewed, setLastViewed] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    // Load last viewed time from localStorage for students
+    if (!isAdminOrNurse && user) {
+      const stored = localStorage.getItem(`notif_last_viewed_${user.id}`);
+      if (stored) setLastViewed(stored);
+    }
+  }, []);
 
   // Close avatar dropdown on outside click
   useEffect(() => {
@@ -68,17 +78,18 @@ export default function Navbar({ user }: NavbarProps) {
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
       } else if (studentId) {
-        // Only show notifications for items updated in the last 3 days
-        const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+        // Only show notifications for items updated after the student last viewed them
+        // Falls back to 3 days ago if never viewed
+        const sinceDate = lastViewed || new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
         const [appts, certs] = await Promise.all([
           supabase.from("appointments").select("id", { count: "exact", head: true })
             .eq("user_id", studentId)
             .in("status", ["Approved", "Rejected", "Completed"])
-            .gte("updated_at", recentDate),
+            .gt("updated_at", sinceDate),
           supabase.from("certificates").select("id", { count: "exact", head: true })
             .eq("user_id", studentId)
             .in("status", ["Approved", "Rejected", "Completed"])
-            .gte("updated_at", recentDate),
+            .gt("updated_at", sinceDate),
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
       }
@@ -97,7 +108,7 @@ export default function Navbar({ user }: NavbarProps) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, isAdminOrNurse, studentId, supabase]);
+  }, [user, isAdminOrNurse, studentId, supabase, lastViewed]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -157,7 +168,15 @@ export default function Navbar({ user }: NavbarProps) {
               {/* Notification Bell */}
               <div className="relative">
                 <button
-                  onClick={() => setNotifOpen(!notifOpen)}
+                  onClick={() => {
+                    if (!notifOpen && !isAdminOrNurse && user) {
+                      // Mark notifications as viewed
+                      const now = new Date().toISOString();
+                      localStorage.setItem(`notif_last_viewed_${user.id}`, now);
+                      setLastViewed(now);
+                    }
+                    setNotifOpen(!notifOpen);
+                  }}
                   className="relative bg-transparent border-none cursor-pointer p-2 rounded-lg hover:bg-black/[0.04] text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <BellIcon size={19} />
@@ -208,8 +227,8 @@ export default function Navbar({ user }: NavbarProps) {
                           </>
                         ) : (
                           <>
-                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
-                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
+                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
+                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
                           </>
                         )}
                       </div>
@@ -267,7 +286,14 @@ export default function Navbar({ user }: NavbarProps) {
           {user && (
             <div className="relative">
               <button
-                onClick={() => { setNotifOpen(!notifOpen); }}
+                onClick={() => {
+                  if (!notifOpen && !isAdminOrNurse && user) {
+                    const now = new Date().toISOString();
+                    localStorage.setItem(`notif_last_viewed_${user.id}`, now);
+                    setLastViewed(now);
+                  }
+                  setNotifOpen(!notifOpen);
+                }}
                 className={`relative bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
                   notifOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
                 }`}
@@ -335,8 +361,8 @@ export default function Navbar({ user }: NavbarProps) {
                 </>
               ) : (
                 <>
-                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
-                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} />
+                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
+                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
                 </>
               )}
             </div>
@@ -485,8 +511,8 @@ function NavLink({ href, pathname, children }: { href: string; pathname: string;
 }
 
 /* ── Notification item ── */
-function PendingNotifItem({ supabase, table, label, description, icon, iconBg, iconColor, href, onClick, statusFilter, userId }: {
-  supabase: any; table: string; label: string; description: string; icon: React.ReactNode; iconBg: string; iconColor: string; href: string; onClick: () => void; statusFilter?: string[]; userId?: string | null;
+function PendingNotifItem({ supabase, table, label, description, icon, iconBg, iconColor, href, onClick, statusFilter, userId, sinceDate }: {
+  supabase: any; table: string; label: string; description: string; icon: React.ReactNode; iconBg: string; iconColor: string; href: string; onClick: () => void; statusFilter?: string[]; userId?: string | null; sinceDate?: string | null;
 }) {
   const [count, setCount] = useState(0);
 
@@ -494,9 +520,9 @@ function PendingNotifItem({ supabase, table, label, description, icon, iconBg, i
     let query = supabase.from(table).select("id", { count: "exact", head: true });
     if (userId) {
       query = query.eq("user_id", userId);
-      // Only show recent notifications (last 3 days) for students
-      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      query = query.gte("updated_at", recentDate);
+      // Only show notifications since last viewed (or last 3 days)
+      const since = sinceDate || new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gt("updated_at", since);
     }
     if (statusFilter) {
       query = query.in("status", statusFilter);
@@ -504,7 +530,7 @@ function PendingNotifItem({ supabase, table, label, description, icon, iconBg, i
       query = query.eq("status", "Pending");
     }
     query.then(({ count }: { count: number | null }) => setCount(count || 0));
-  }, [supabase, table, statusFilter, userId]);
+  }, [supabase, table, statusFilter, userId, sinceDate]);
 
   if (count === 0) return null;
 
