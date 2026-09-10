@@ -53,7 +53,7 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes - skip auth check
   const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth");
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/auth/callback");
 
   if (isPublicRoute) {
     return supabaseResponse;

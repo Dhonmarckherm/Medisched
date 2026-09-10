@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LockIcon, ArrowLeftIcon, CheckCircleIcon } from "@/components/Icons";
@@ -12,17 +11,18 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
+  const [checking, setChecking] = useState(true);
   const router = useRouter();
   const supabase = createClient();
 
-  // Check if we have a recovery token in the URL hash (from Supabase email link)
+  // Check if user has a valid session (from auth callback)
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes("access_token")) {
-      setHasToken(true);
-    }
-  }, []);
+    supabase.auth.getSession().then(({ data }: { data: { session: unknown } }) => {
+      setHasSession(!!data.session);
+      setChecking(false);
+    });
+  }, [supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,35 +32,32 @@ export default function ResetPasswordPage() {
     if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
 
     try {
-      // If we have a token from the email link, use Supabase to update the password
-      if (hasToken) {
-        const { error: updateError } = await supabase.auth.updateUser({ password });
-        if (updateError) { setError(updateError.message); setLoading(false); return; }
-        setSuccess("Password reset successfully! Redirecting to login...");
-        // Sign out to clear the session
-        await supabase.auth.signOut();
-        setTimeout(() => router.push("/login"), 2000);
-      } else {
-        // Fallback: use our API (old flow with email + ID number)
-        const res = await fetch("/api/auth/reset-password", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ new_password: password }),
-        });
-        const data = await res.json();
-        if (!res.ok) { setError(data.error || "Failed to reset password"); setLoading(false); return; }
-        setSuccess("Password reset successfully! Redirecting to login...");
-        setTimeout(() => router.push("/login"), 2000);
-      }
+      // User has a session from the auth callback - update password directly
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) { setError(updateError.message); setLoading(false); return; }
+      setSuccess("Password reset successfully! Redirecting to login...");
+      // Sign out to clear the recovery session
+      await supabase.auth.signOut();
+      setTimeout(() => router.push("/login"), 2000);
     } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
   };
 
-  // If no token, show message to use forgot password
-  if (!hasToken && typeof window !== "undefined" && !window.location.hash.includes("access_token")) {
+  // Show loading while checking session
+  if (checking) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-400 text-[14px]">Loading...</p>
+      </div>
+    );
+  }
+
+  // If no session, show message to use forgot password
+  if (!hasSession) {
     return (
       <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
-        <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+        <a href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
           <ArrowLeftIcon size={14} /> Back to Home
-        </Link>
+        </a>
         <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
           <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
             <LockIcon className="text-white" size={32} />
@@ -76,14 +73,14 @@ export default function ResetPasswordPage() {
             <p className="text-gray-400 text-[14px] mb-8">
               To reset your password, you need to request a reset link via email first.
             </p>
-            <Link href="/forgot-password"
+            <a href="/forgot-password"
               className="inline-block py-3 px-8 bg-primary text-white rounded-lg text-[14px] font-medium no-underline hover:bg-primary-hover transition">
               Request Reset Link
-            </Link>
+            </a>
             <p className="mt-5 text-[13px]">
-              <Link href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
+              <a href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
                 <ArrowLeftIcon size={14} /> Back to Login
-              </Link>
+              </a>
             </p>
           </div>
         </div>
@@ -93,9 +90,9 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
-      <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+      <a href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
         <ArrowLeftIcon size={14} /> Back to Home
-      </Link>
+      </a>
 
       {/* Left Panel */}
       <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
@@ -128,7 +125,7 @@ export default function ResetPasswordPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">New Password</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
@@ -136,7 +133,7 @@ export default function ResetPasswordPage() {
             </div>
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm New Password</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
+              <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter password" />
@@ -150,9 +147,9 @@ export default function ResetPasswordPage() {
           </button>
 
           <p className="mt-5 text-center text-[13px]">
-            <Link href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
+            <a href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
               <ArrowLeftIcon size={14} /> Back to Login
-            </Link>
+            </a>
           </p>
         </form>
       </div>
