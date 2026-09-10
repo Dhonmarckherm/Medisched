@@ -12,6 +12,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [debug, setDebug] = useState<string[]>([]);
   const router = useRouter();
 
   // Get token from URL query parameter
@@ -24,7 +25,7 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError(""); setSuccess(""); setDebug([]); setLoading(true);
 
     if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
@@ -37,6 +38,7 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({ token, new_password: password }),
       });
       const data = await res.json();
+      if (data.debug) setDebug(data.debug);
       if (!res.ok) { setError(data.error || "Failed to reset password"); setLoading(false); return; }
       setSuccess("Password reset successfully! Redirecting to login...");
       setTimeout(() => router.push("/login"), 2000);
@@ -113,6 +115,11 @@ export default function ResetPasswordPage() {
           <p className="text-gray-400 text-[14px] mb-8">Choose a strong password to secure your account</p>
 
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">{error}</div>}
+          {debug.length > 0 && (
+            <div className="bg-gray-50 p-3 rounded-lg mb-5 text-[11px] font-mono text-gray-600 border border-gray-200 overflow-x-auto">
+              {debug.map((line, i) => <div key={i}>{line}</div>)}
+            </div>
+          )}
           {success && (
             <div className="bg-emerald-50 text-emerald-600 p-4 rounded-lg mb-5 text-[14px] border border-emerald-100 flex items-start gap-3">
               <CheckCircleIcon size={20} className="flex-shrink-0 mt-0.5" />
