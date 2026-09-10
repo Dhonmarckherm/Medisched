@@ -1,43 +1,98 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+import { createClient } from "@/lib/supabase/client";
+import { LockIcon, ArrowLeftIcon, CheckCircleIcon } from "@/components/Icons";
 
 export default function ResetPasswordPage() {
-  const [formData, setFormData] = useState({ email: "", idNumber: "", newPassword: "", confirmPassword: "" });
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  // Check if we have a recovery token in the URL hash (from Supabase email link)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token")) {
+      setHasToken(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(""); setSuccess(""); setLoading(true);
 
-    if (formData.newPassword !== formData.confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
-    if (formData.newPassword.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+    if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, id_number: formData.idNumber, new_password: formData.newPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to reset password"); setLoading(false); return; }
-      setSuccess("Password reset successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 2000);
+      // If we have a token from the email link, use Supabase to update the password
+      if (hasToken) {
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) { setError(updateError.message); setLoading(false); return; }
+        setSuccess("Password reset successfully! Redirecting to login...");
+        // Sign out to clear the session
+        await supabase.auth.signOut();
+        setTimeout(() => router.push("/login"), 2000);
+      } else {
+        // Fallback: use our API (old flow with email + ID number)
+        const res = await fetch("/api/auth/reset-password", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ new_password: password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setError(data.error || "Failed to reset password"); setLoading(false); return; }
+        setSuccess("Password reset successfully! Redirecting to login...");
+        setTimeout(() => router.push("/login"), 2000);
+      }
     } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
   };
 
+  // If no token, show message to use forgot password
+  if (!hasToken && typeof window !== "undefined" && !window.location.hash.includes("access_token")) {
+    return (
+      <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
+        <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
+          <ArrowLeftIcon size={14} /> Back to Home
+        </Link>
+        <div className="w-full lg:w-1/2 bg-primary text-white flex flex-col justify-center items-center p-12">
+          <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+            <LockIcon className="text-white" size={32} />
+          </div>
+          <h1 className="text-[36px] font-bold mb-3 text-center">Reset Password</h1>
+          <p className="text-[16px] text-center opacity-80 max-w-[360px]">
+            You need a reset link to change your password.
+          </p>
+        </div>
+        <div className="w-full lg:w-1/2 flex justify-center items-center bg-white p-8">
+          <div className="w-full max-w-[400px] text-center">
+            <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">No Reset Link</h2>
+            <p className="text-gray-400 text-[14px] mb-8">
+              To reset your password, you need to request a reset link via email first.
+            </p>
+            <Link href="/forgot-password"
+              className="inline-block py-3 px-8 bg-primary text-white rounded-lg text-[14px] font-medium no-underline hover:bg-primary-hover transition">
+              Request Reset Link
+            </Link>
+            <p className="mt-5 text-[13px]">
+              <Link href="/login" className="text-primary no-underline font-medium inline-flex items-center gap-1">
+                <ArrowLeftIcon size={14} /> Back to Login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
-      {/* Back to Home */}
       <Link href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">
         <ArrowLeftIcon size={14} /> Back to Home
       </Link>
@@ -47,43 +102,35 @@ export default function ResetPasswordPage() {
         <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
           <LockIcon className="text-white" size={32} />
         </div>
-        <h1 className="text-[36px] font-bold mb-3 text-center">Reset Password</h1>
+        <h1 className="text-[36px] font-bold mb-3 text-center">Set New Password</h1>
         <p className="text-[16px] text-center opacity-80 max-w-[360px]">
-          Enter your credentials to reset your password and regain access to your account.
+          Enter your new password below to complete the reset.
         </p>
       </div>
 
       {/* Right Panel */}
       <div className="w-full lg:w-1/2 flex justify-center items-center bg-white p-8">
         <form onSubmit={handleSubmit} className="w-full max-w-[400px]">
-          <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Reset Your Password</h2>
-          <p className="text-gray-400 text-[14px] mb-8">We&apos;ll help you recover your account</p>
+          <h2 className="text-[26px] font-bold text-[#1a1a2e] mb-2">Create New Password</h2>
+          <p className="text-gray-400 text-[14px] mb-8">Choose a strong password to secure your account</p>
 
           {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-5 text-[14px] border border-red-100">{error}</div>}
-          {success && <div className="bg-emerald-50 text-emerald-600 p-3 rounded-lg mb-5 text-[14px] border border-emerald-100">{success}</div>}
+          {success && (
+            <div className="bg-emerald-50 text-emerald-600 p-4 rounded-lg mb-5 text-[14px] border border-emerald-100 flex items-start gap-3">
+              <CheckCircleIcon size={20} className="flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold mb-1 m-0">{success}</p>
+                <p className="text-[13px] text-emerald-500 m-0">You can now log in with your new password.</p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Email</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
-                <MailIcon className="text-gray-400 mr-2" size={18} />
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[13px] font-medium text-gray-600 mb-1.5">ID Number</label>
-              <div className="flex items-center border border-gray-200 rounded-lg px-3">
-                <IdCardIcon className="text-gray-400 mr-2" size={18} />
-                <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} required
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Your ID number" />
-              </div>
-            </div>
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">New Password</label>
               <div className="flex items-center border border-gray-200 rounded-lg px-3">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="newPassword" value={formData.newPassword} onChange={handleChange} required minLength={6}
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
               </div>
             </div>
@@ -91,7 +138,7 @@ export default function ResetPasswordPage() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm New Password</label>
               <div className="flex items-center border border-gray-200 rounded-lg px-3">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required minLength={6}
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter password" />
               </div>
             </div>

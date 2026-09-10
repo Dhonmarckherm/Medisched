@@ -273,3 +273,63 @@ export async function sendStatusNotification(
     return false;
   }
 }
+
+/* ── Password Reset Email ── */
+
+function passwordResetEmail(name: string, resetUrl: string) {
+  return baseLayout("Reset Your Password", `
+<div style="margin-bottom:32px">
+<h1 style="margin:0 0 12px;font-size:26px;color:#111;font-weight:700;letter-spacing:-0.3px">Hi ${name},</h1>
+<p style="margin:0;font-size:16px;color:#555;line-height:1.8">
+We received a request to reset your password. Click the button below to choose a new password:
+</p>
+</div>
+
+<!-- Reset Button -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
+<tr><td align="center">
+<a href="${resetUrl}" style="display:inline-block;padding:16px 48px;background:#84B179;color:#fff;text-decoration:none;border-radius:12px;font-size:16px;font-weight:600;letter-spacing:0.3px">Reset My Password</a>
+</td></tr>
+</table>
+
+<!-- Alternative link -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+<tr><td style="padding:20px 24px;background:#f8faf9;border-radius:12px">
+<p style="margin:0;font-size:13px;color:#888;line-height:1.7">
+If the button doesn't work, copy and paste this link into your browser:
+</p>
+<p style="margin:10px 0 0;font-size:12px;color:#84B179;word-break:break-all;line-height:1.6">
+${resetUrl}
+</p>
+</td></tr>
+</table>
+
+<!-- Security notice -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+<tr>
+<td style="padding:16px 20px;background:#fffbeb;border-radius:12px;border:1px solid #fef3c7">
+<p style="margin:0;font-size:13px;color:#92400e;line-height:1.6">
+&#128274; <strong>Security note:</strong> This link will expire in 24 hours. If you didn't request a password reset, you can safely ignore this email.
+</p>
+</td>
+</tr>
+</table>
+  `);
+}
+
+export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
+  try {
+    const html = passwordResetEmail(name, resetUrl);
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: "Reset Your Password — ISPSC Clinic",
+      html,
+      text: htmlToText(html),
+    });
+    return true;
+  } catch (err) {
+    console.error("Failed to send password reset email:", err);
+    return false;
+  }
+}

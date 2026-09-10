@@ -126,7 +126,7 @@ function LoginForm() {
             <label className="flex items-center gap-2 text-gray-500">
               <input type="checkbox" className="accent-primary rounded" /> Remember me
             </label>
-            <Link href="/reset-password" className="text-primary no-underline font-medium">
+            <Link href="/forgot-password" className="text-primary no-underline font-medium">
               Forgot password?
             </Link>
           </div>
