@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
 
           <div>
             <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Email Address</label>
-            <div className="flex items-center border border-gray-200 rounded-lg px-3">
+            <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
               <MailIcon className="text-gray-400 mr-2" size={18} />
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
                 className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="you@email.com" />
