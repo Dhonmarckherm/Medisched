@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       type: "recovery",
       email,
       options: {
-        redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       },
     });
 
