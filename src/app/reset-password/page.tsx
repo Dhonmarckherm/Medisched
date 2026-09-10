@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { LockIcon, ArrowLeftIcon, CheckCircleIcon } from "@/components/Icons";
 
 export default function ResetPasswordPage() {
@@ -11,56 +10,17 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
 
-  // Check for session, URL hash tokens, or PKCE code
+  // Get token from URL query parameter
   useEffect(() => {
-    async function checkAuth() {
-      // 1. Check for PKCE code in URL query (?code=xxx)
-      const searchParams = new URLSearchParams(window.location.search);
-      const code = searchParams.get("code");
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (!exchangeError) {
-          setHasSession(true);
-          setChecking(false);
-          // Clean the URL
-          window.history.replaceState({}, "", "/reset-password");
-          return;
-        } else {
-          setError("Invalid or expired reset link. Please request a new one.");
-          setChecking(false);
-          return;
-        }
-      }
-
-      // 2. Check for tokens in URL hash (#access_token=xxx)
-      const hash = window.location.hash;
-      if (hash && hash.includes("access_token")) {
-        // Supabase should auto-detect this, but let's help it
-        const { error: sessionError } = await supabase.auth.getSession();
-        if (!sessionError) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            setHasSession(true);
-            setChecking(false);
-            window.history.replaceState({}, "", "/reset-password");
-            return;
-          }
-        }
-      }
-
-      // 3. Check for existing session (from auth callback)
-      const { data: { session } } = await supabase.auth.getSession();
-      setHasSession(!!session);
-      setChecking(false);
-    }
-
-    checkAuth();
-  }, [supabase]);
+    const searchParams = new URLSearchParams(window.location.search);
+    const t = searchParams.get("token");
+    setToken(t);
+    setChecking(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,17 +28,22 @@ export default function ResetPasswordPage() {
 
     if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+    if (!token) { setError("Invalid reset link. Please request a new one."); setLoading(false); return; }
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) { setError(updateError.message); setLoading(false); return; }
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, new_password: password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Failed to reset password"); setLoading(false); return; }
       setSuccess("Password reset successfully! Redirecting to login...");
-      await supabase.auth.signOut();
       setTimeout(() => router.push("/login"), 2000);
     } catch { setError("An unexpected error occurred"); } finally { setLoading(false); }
   };
 
-  // Show loading while checking session
+  // Show loading while checking
   if (checking) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center bg-white">
@@ -87,8 +52,8 @@ export default function ResetPasswordPage() {
     );
   }
 
-  // If no session, show message to use forgot password
-  if (!hasSession) {
+  // If no token, show message to use forgot password
+  if (!token) {
     return (
       <div className="w-full min-h-screen flex flex-col lg:flex-row relative">
         <a href="/" className="absolute top-5 left-5 flex items-center gap-1.5 text-white/80 hover:text-white no-underline text-[13px] font-medium transition">

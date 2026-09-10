@@ -1,77 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import bcrypt from "bcryptjs";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, id_number, new_password } = body;
+    const { token, new_password } = await request.json();
 
-    if (!email || !id_number || !new_password) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
-      );
+    if (!token || !new_password) {
+      return NextResponse.json({ error: "Token and new password are required" }, { status: 400 });
     }
 
     if (new_password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
-    // Find user
-    const { data: user, error } = await supabase
+    // Find user with this reset token that hasn't expired
+    const { data: user, error: findError } = await serviceClient
       .from("users")
-      .select("*")
-      .eq("email", email)
-      .eq("id_number", id_number)
+      .select("id, auth_id, email, first_name, reset_token_expiry")
+      .eq("reset_token", token)
       .single();
 
-    if (error || !user) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 400 }
-      );
+    if (findError || !user) {
+      return NextResponse.json({ error: "Invalid or expired reset link. Please request a new one." }, { status: 400 });
     }
 
-    // Hash new password
-    const password_hash = await bcrypt.hash(new_password, 12);
+    // Check if token has expired
+    if (user.reset_token_expiry && new Date(user.reset_token_expiry) < new Date()) {
+      return NextResponse.json({ error: "This reset link has expired. Please request a new one." }, { status: 400 });
+    }
 
-    // Update password
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ password_hash })
-      .eq("id", user.id);
+    // Update the password via Supabase Admin API
+    const { error: updateError } = await serviceClient.auth.admin.updateUserById(user.auth_id, {
+      password: new_password,
+    });
 
     if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to update password" },
-        { status: 500 }
-      );
+      console.error("Failed to update password:", updateError);
+      return NextResponse.json({ error: "Failed to update password" }, { status: 500 });
     }
 
-    // Also update Supabase Auth password if auth_id exists
-    if (user.auth_id) {
-      try {
-        const { data: { session } } = await supabase.auth.signInWithPassword({
-          email,
-          password: new_password,
-        });
-        // If we can sign in, password was already updated in auth
-      } catch {
-        // Auth password update is best-effort
-      }
-    }
+    // Clear the reset token
+    await serviceClient
+      .from("users")
+      .update({ reset_token: null, reset_token_expiry: null })
+      .eq("id", user.id);
 
     return NextResponse.json({ message: "Password reset successfully" });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Reset password error:", error);
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPasswordResetEmail } from "@/lib/email";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   const debug: string[] = [];
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     const serviceClient = createServiceClient();
     const { data: dbUser, error: userError } = await serviceClient
       .from("users")
-      .select("id, first_name, email")
+      .select("id, first_name, email, auth_id")
       .eq("email", email)
       .single();
 
@@ -26,39 +27,26 @@ export async function POST(request: NextRequest) {
 
     debug.push(`User: ${dbUser.first_name} (${dbUser.id})`);
 
-    // Generate recovery link using Supabase Admin API
+    // Generate our own secure random token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+
+    // Store token in the users table
+    const { error: updateError } = await serviceClient
+      .from("users")
+      .update({ reset_token: resetToken, reset_token_expiry: resetExpiry })
+      .eq("id", dbUser.id);
+
+    debug.push(`Token stored: ${!updateError}, Error: ${updateError?.message || "none"}`);
+
+    if (updateError) {
+      return NextResponse.json({ error: `Failed to store token: ${updateError.message}`, debug }, { status: 500 });
+    }
+
+    // Build direct link to our reset page (no Supabase redirect!)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
-    debug.push(`App URL: ${appUrl}`);
-
-    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${appUrl}/reset-password`,
-      },
-    });
-
-    debug.push(`Link error: ${linkError?.message || "none"}`);
-
-    if (linkError || !linkData) {
-      return NextResponse.json({ error: "Failed to generate reset link", debug }, { status: 500 });
-    }
-
-    // The action_link is the URL the user needs to visit
-    const resetUrl = linkData.properties?.action_link;
-    debug.push(`Reset URL exists: ${!!resetUrl}`);
-    if (resetUrl) {
-      // Show first 80 chars of URL for debugging (hide token)
-      debug.push(`URL start: ${resetUrl.substring(0, 80)}...`);
-    }
-
-    if (!resetUrl) {
-      debug.push(`Full linkData keys: ${JSON.stringify(Object.keys(linkData))}`);
-      if (linkData.properties) {
-        debug.push(`Properties keys: ${JSON.stringify(Object.keys(linkData.properties))}`);
-      }
-      return NextResponse.json({ error: "No action_link in response", debug }, { status: 500 });
-    }
+    const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+    debug.push(`Reset URL: ${resetUrl}`);
 
     // Send email via Gmail SMTP (ISPSC CLINIC template)
     debug.push(`Sending via Gmail SMTP to: ${email}`);
