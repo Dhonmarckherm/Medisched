@@ -11,7 +11,8 @@ export default async function AdminDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", user.id).single();
+  const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", user.id).limit(1);
+  const dbUser = dbUserData?.[0] || null;
   if (!dbUser || (dbUser.role !== "admin" && dbUser.role !== "nurse")) redirect("/dashboard");
 
   const [

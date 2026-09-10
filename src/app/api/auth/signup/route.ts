@@ -85,11 +85,11 @@ export async function POST(request: NextRequest) {
         active_status: "active",
       })
       .select()
-      .single();
+      .limit(1);
 
-    if (dbError) {
+    if (dbError || !dbUser || dbUser.length === 0) {
       return NextResponse.json(
-        { error: "Failed to create user: " + dbError.message },
+        { error: "Failed to create user" },
         { status: 500 }
       );
     }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     sendWelcomeEmail(email, first_name).catch(() => {});
 
     return NextResponse.json(
-      { message: "Account created successfully", user: dbUser },
+      { message: "Account created successfully", user: dbUser[0] },
       { status: 201 }
     );
   } catch (error) {

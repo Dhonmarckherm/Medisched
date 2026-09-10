@@ -10,11 +10,13 @@ export async function POST(request: NextRequest) {
 
     // Use service client to bypass RLS (user is not logged in)
     const serviceClient = createServiceClient();
-    const { data: dbUser } = await serviceClient
+    const { data: dbUserData } = await serviceClient
       .from("users")
       .select("id, first_name, email, auth_id")
       .eq("email", email)
-      .single();
+      .limit(1);
+
+    const dbUser = dbUserData?.[0];
 
     if (!dbUser) {
       // Don't reveal if the email exists (security)

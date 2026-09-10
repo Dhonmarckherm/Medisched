@@ -25,7 +25,8 @@ export default function AnalyticsPage() {
     const fetchData = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
-      const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
+      const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+      const dbUser = dbUserData?.[0] || null;
       if (!dbUser || (dbUser.role !== "admin" && dbUser.role !== "nurse")) return;
       setUser(dbUser);
 

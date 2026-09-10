@@ -12,11 +12,13 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const { data: user } = await supabase
+    const { data: users } = await supabase
       .from("users")
       .select("password_hash")
       .eq("id", userId)
-      .single();
+      .limit(1);
+
+    const user = users?.[0];
 
     if (!user) {
       return NextResponse.json({ valid: false }, { status: 404 });

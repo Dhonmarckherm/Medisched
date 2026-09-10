@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
+import { useToast } from "@/components/Toast";
+import { XCircleIcon } from "@/components/Icons";
 
 interface Appointment {
   id: string;
@@ -28,6 +30,29 @@ export default function AppointmentsListClient({ appointments, isAdminOrNurse }:
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const { addToast } = useToast();
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+    setCancellingId(id);
+    try {
+      const res = await fetch("/api/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, type: "appointment" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { addToast("error", data.error || "Failed to cancel"); setCancellingId(null); return; }
+      addToast("success", "Appointment cancelled");
+      // Refresh the page to reflect changes
+      window.location.reload();
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = appointments;
@@ -115,6 +140,7 @@ export default function AppointmentsListClient({ appointments, isAdminOrNurse }:
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Purpose</th>
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Created</th>
+                  {!isAdminOrNurse && <th className="text-left py-3 px-4 text-[13px] font-semibold text-gray-500 uppercase tracking-wide">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -127,6 +153,17 @@ export default function AppointmentsListClient({ appointments, isAdminOrNurse }:
                     <td className="py-3 px-4 text-[14px] text-gray-500 max-w-[200px] truncate">{appt.purpose}</td>
                     <td className="py-3 px-4"><StatusBadge status={appt.status} /></td>
                     <td className="py-3 px-4 text-[14px] text-gray-400">{new Date(appt.created_at).toLocaleDateString()}</td>
+                    {!isAdminOrNurse && (
+                      <td className="py-3 px-4">
+                        {appt.status === "Pending" && (
+                          <button onClick={() => handleCancel(appt.id)} disabled={cancellingId === appt.id}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            {cancellingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <XCircleIcon size={14} />}
+                            {cancellingId === appt.id ? "Cancelling..." : "Cancel"}
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

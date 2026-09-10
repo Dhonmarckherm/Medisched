@@ -24,7 +24,8 @@ export default function ManageUsersPage() {
   const fetchData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return;
-    const { data: dbUser } = await supabase.from("users").select("*").eq("auth_id", authUser.id).single();
+    const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", authUser.id).limit(1);
+    const dbUser = dbUserData?.[0] || null;
     setUser(dbUser);
     if (dbUser?.role !== "admin") return;
     const { data } = await supabase.from("users").select("*").order("created_at", { ascending: false });
