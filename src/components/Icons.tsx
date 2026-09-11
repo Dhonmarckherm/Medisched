@@ -107,6 +107,16 @@ export function MailIcon({ className = "", size = 24 }: IconProps) {
   );
 }
 
+export function MailCheckIcon({ className = "", size = 24 }: IconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M22 12.5V6a2 2 0 0 0-1-1.73l-8-4.6a2 2 0 0 0-2 0l-8 4.6A2 2 0 0 0 2 6v12a2 2 0 0 0 1 1.73l8 4.6a2 2 0 0 0 2 0l4.4-2.5" />
+      <path d="M22 12.5V18a2 2 0 0 1-1 1.73" />
+      <polyline points="16 18 19 21 23 15" />
+    </svg>
+  );
+}
+
 export function LockIcon({ className = "", size = 24 }: IconProps) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>

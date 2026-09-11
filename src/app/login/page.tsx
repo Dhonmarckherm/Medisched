@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
+import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon, MailCheckIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
 
 export default function LoginPage() {
@@ -19,6 +19,8 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resending, setResending] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToast();
@@ -50,7 +52,14 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        addToast("error", "Please check your Email, ID Number, and Password");
+        // Check if account is unverified
+        if (data.unverified) {
+          setUnverifiedEmail(email);
+          addToast("warning", "Your account is not verified yet. Check your Gmail or click Resend below.");
+        } else {
+          setUnverifiedEmail("");
+          addToast("error", "Please check your Email, ID Number, and Password");
+        }
         setLoading(false);
         return;
       }
@@ -66,6 +75,28 @@ function LoginForm() {
       addToast("error", "An unexpected error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setResending(true);
+    try {
+      const res = await fetch("/api/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        addToast("success", "Verification email sent! Check your Gmail inbox.");
+      } else {
+        addToast("error", data.error || "Failed to resend email");
+      }
+    } catch {
+      addToast("error", "Failed to resend verification email");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -140,6 +171,31 @@ function LoginForm() {
             className="w-full py-3 bg-primary text-white border-none rounded-lg cursor-pointer text-[14px] font-medium mt-6 hover:bg-primary-hover transition disabled:opacity-50">
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          {/* Unverified Account Banner */}
+          {unverifiedEmail && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MailCheckIcon size={16} className="text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-amber-800 m-0">Account Not Verified</p>
+                  <p className="text-[12px] text-amber-600 m-0 mt-1 leading-relaxed">
+                    Your account needs email verification before you can login. Check your Gmail inbox (and spam folder) for the verification link.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    className="mt-3 bg-amber-600 text-white border-none rounded-lg px-4 py-2 text-[12px] font-medium cursor-pointer hover:bg-amber-700 transition disabled:opacity-50"
+                  >
+                    {resending ? "Sending..." : "Resend Verification Email"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <p className="mt-5 text-center text-[13px] text-gray-400">
             Don&apos;t have an account?{" "}
