@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { DownloadIcon, QrCodeIcon } from "@/components/Icons";
 
 export default function SignupQRWidget() {
   const [copied, setCopied] = useState(false);
+  const [signupUrl, setSignupUrl] = useState("");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== "undefined" ? window.location.origin : "");
-  const signupUrl = `${siteUrl}/signup`;
+  useEffect(() => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    setSignupUrl(`${siteUrl}/signup`);
+  }, []);
 
   const handleDownload = () => {
     const svg = document.querySelector("#signup-qr svg");
@@ -49,35 +52,41 @@ export default function SignupQRWidget() {
       </div>
 
       <div className="px-5 pb-5 flex flex-col items-center">
-        <div id="signup-qr" className="bg-white p-4 rounded-xl border border-gray-100 mb-3">
-          <QRCodeSVG
-            value={signupUrl}
-            size={160}
-            bgColor="#ffffff"
-            fgColor="#1a1a2e"
-            level="M"
-            includeMargin={false}
-          />
-        </div>
+        {signupUrl ? (
+          <>
+            <div id="signup-qr" className="bg-white p-4 rounded-xl border border-gray-100 mb-3">
+              <QRCodeSVG
+                value={signupUrl}
+                size={160}
+                bgColor="#ffffff"
+                fgColor="#1a1a2e"
+                level="M"
+                includeMargin={false}
+              />
+            </div>
 
-        <div className="flex items-center gap-2 mb-3 w-full">
-          <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-[12px] text-gray-500 truncate border border-gray-100">
-            {signupUrl}
-          </div>
-          <button
-            onClick={handleCopy}
-            className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] font-medium text-gray-600 cursor-pointer hover:bg-gray-50 transition flex-shrink-0"
-          >
-            {copied ? "Copied!" : "Copy"}
-          </button>
-        </div>
+            <div className="flex items-center gap-2 mb-3 w-full">
+              <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-[12px] text-gray-500 truncate border border-gray-100">
+                {signupUrl}
+              </div>
+              <button
+                onClick={handleCopy}
+                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] font-medium text-gray-600 cursor-pointer hover:bg-gray-50 transition flex-shrink-0"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
 
-        <button
-          onClick={handleDownload}
-          className="w-full flex items-center justify-center gap-2 bg-primary text-white border-none rounded-lg px-4 py-2.5 text-[13px] font-medium cursor-pointer hover:bg-primary-hover transition"
-        >
-          <DownloadIcon size={14} /> Download QR Image
-        </button>
+            <button
+              onClick={handleDownload}
+              className="w-full flex items-center justify-center gap-2 bg-primary text-white border-none rounded-lg px-4 py-2.5 text-[13px] font-medium cursor-pointer hover:bg-primary-hover transition"
+            >
+              <DownloadIcon size={14} /> Download QR Image
+            </button>
+          </>
+        ) : (
+          <div className="py-8 text-gray-400 text-[13px]">Loading QR code...</div>
+        )}
       </div>
     </div>
   );
