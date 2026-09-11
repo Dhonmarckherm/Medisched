@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon, LogoutIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -282,7 +282,7 @@ export default function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
-        {/* Mobile: Notification Bell + Menu Button */}
+        {/* Mobile: Notification Bell + Menu Button (admin/nurse only) */}
         <div className="flex lg:hidden items-center gap-1">
           {user && (
             <div className="relative">
@@ -309,15 +309,18 @@ export default function Navbar({ user }: NavbarProps) {
               </button>
             </div>
           )}
-          <button
-            className={`lg:hidden bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
-              mobileOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
-            }`}
-            onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ minWidth: 44, minHeight: 44 }}
-          >
-            {mobileOpen ? <XIcon size={24} className="text-gray-900" /> : <MenuIcon size={24} />}
-          </button>
+          {/* Hamburger menu - only for admin/nurse (students use bottom nav) */}
+          {isAdminOrNurse && (
+            <button
+              className={`lg:hidden bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
+                mobileOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
+              }`}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              style={{ minWidth: 44, minHeight: 44 }}
+            >
+              {mobileOpen ? <XIcon size={24} className="text-gray-900" /> : <MenuIcon size={24} />}
+            </button>
+          )}
         </div>
       </div>
     </header>
@@ -506,6 +509,13 @@ export default function Navbar({ user }: NavbarProps) {
             <BottomNavLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certs" pathname={pathname} />
             <BottomNavLink href="/calendar" icon={<ClockIcon size={20} />} label="Calendar" pathname={pathname} />
             <BottomNavLink href="/profile" icon={<UserIcon size={20} />} label="Profile" pathname={pathname} />
+            <button
+              onClick={() => setLogoutModal(true)}
+              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-gray-400 hover:text-red-500 transition-colors min-w-0 bg-transparent border-none cursor-pointer"
+            >
+              <LogoutIcon size={20} />
+              <span className="text-[10px] font-medium leading-tight">Logout</span>
+            </button>
           </nav>
         </>
       )}
