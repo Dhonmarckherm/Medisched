@@ -8,6 +8,8 @@ import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
 import { CheckCircleIcon, XCircleIcon, CertificateIcon, TrashIcon } from "@/components/Icons";
+import ActionModal from "@/components/ActionModal";
+import { logActivity } from "@/lib/activityLog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,6 +21,7 @@ export default function ManageCertificatesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [modalItem, setModalItem] = useState<{ id: string; action: "Approved" | "Rejected"; name: string } | null>(null);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -34,13 +37,18 @@ export default function ManageCertificatesPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+  const handleAction = async (id: string, action: "Approved" | "Rejected", adminRemarks: string) => {
     setActionLoadingId(id);
     const cert = certificates.find((c) => c.id === id);
-    const { error } = await supabase.from("certificates").update({ status: action }).eq("id", id);
+    const updateData: any = { status: action };
+    if (adminRemarks) updateData.admin_remarks = adminRemarks;
+    const { error } = await supabase.from("certificates").update(updateData).eq("id", id);
     if (error) { addToast("error", "Failed to update"); setActionLoadingId(null); return; }
     setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, status: action } : c)));
     addToast("success", `Certificate ${action.toLowerCase()} successfully`);
+
+    // Log activity
+    logActivity(`certificate_${action.toLowerCase()}`, "certificate", id, `${cert?.firstname} ${cert?.lastname} — ${cert?.purpose}`);
 
     // Send email notification
     const email = cert?.users?.email || cert?.email;
@@ -60,6 +68,7 @@ export default function ManageCertificatesPage() {
       } catch { /* non-critical */ }
     }
     setActionLoadingId(null);
+    setModalItem(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -71,6 +80,7 @@ export default function ManageCertificatesPage() {
       if (!res.ok) { addToast("error", data.error || "Failed to delete"); setActionLoadingId(null); return; }
       setCertificates((prev) => prev.filter((c) => c.id !== id));
       addToast("success", "Certificate deleted permanently");
+      logActivity("certificate_deleted", "certificate", id, "Deleted by admin");
     } catch { addToast("error", "An unexpected error occurred"); }
     setActionLoadingId(null);
   };
@@ -168,11 +178,11 @@ export default function ManageCertificatesPage() {
                         <div className="flex gap-1.5">
                           {cert.status === "Pending" && (
                             <>
-                              <button onClick={() => handleAction(cert.id, "Approved")} disabled={actionLoadingId === cert.id}
+                              <button onClick={() => setModalItem({ id: cert.id, action: "Approved", name: `${cert.firstname} ${cert.lastname}` })} disabled={actionLoadingId === cert.id}
                                 className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === cert.id ? "Approving..." : "Approve"}
+                                {actionLoadingId === cert.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} Approve
                               </button>
-                              <button onClick={() => handleAction(cert.id, "Rejected")} disabled={actionLoadingId === cert.id}
+                              <button onClick={() => setModalItem({ id: cert.id, action: "Rejected", name: `${cert.firstname} ${cert.lastname}` })} disabled={actionLoadingId === cert.id}
                                 className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                 <XCircleIcon size={14} /> Reject
                               </button>
@@ -194,6 +204,17 @@ export default function ManageCertificatesPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </main>
+
+      {/* Action Modal */}
+      <ActionModal
+        open={!!modalItem}
+        action={modalItem?.action || "Approved"}
+        itemName={modalItem?.name || ""}
+        onConfirm={(remarks) => modalItem && handleAction(modalItem.id, modalItem.action, remarks)}
+        onCancel={() => setModalItem(null)}
+        loading={!!actionLoadingId && !!modalItem}
+      />
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

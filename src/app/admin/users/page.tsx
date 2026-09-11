@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
 import { UsersIcon, ShieldIcon, UserXIcon } from "@/components/Icons";
+import { logActivity } from "@/lib/activityLog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -36,18 +37,22 @@ export default function ManageUsersPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleChangeRole = async (id: string, role: string) => {
+    const targetUser = users.find((u) => u.id === id);
     const { error } = await supabase.from("users").update({ role }).eq("id", id);
     if (error) { addToast("error", "Failed to update role"); return; }
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
     addToast("success", `Role updated to ${role}`);
+    logActivity("role_changed", "user", id, `${targetUser?.first_name} ${targetUser?.last_name} → ${role}`);
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
+    const targetUser = users.find((u) => u.id === id);
     const { error } = await supabase.from("users").update({ active_status: newStatus }).eq("id", id);
     if (error) { addToast("error", "Failed to toggle status"); return; }
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, active_status: newStatus } : u)));
     addToast("success", `User ${newStatus === "active" ? "activated" : "deactivated"}`);
+    logActivity(newStatus === "active" ? "user_activated" : "user_deactivated", "user", id, `${targetUser?.first_name} ${targetUser?.last_name}`);
   };
 
   const filtered = useMemo(() => {

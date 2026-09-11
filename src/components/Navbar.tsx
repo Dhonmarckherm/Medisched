@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -149,6 +149,7 @@ export default function Navbar({ user }: NavbarProps) {
                   <>
                     <li><NavLink href="/pending" pathname={pathname}>Pending</NavLink></li>
                     <li><NavLink href="/admin/analytics" pathname={pathname}>Analytics</NavLink></li>
+                    <li><NavLink href="/admin/activity-log" pathname={pathname}>Activity Log</NavLink></li>
                   </>
                 )}
               </>
@@ -430,6 +431,7 @@ export default function Navbar({ user }: NavbarProps) {
                       <div className="px-3 pt-4 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Admin</div>
                       <SidebarLink href="/pending" icon={<BellIcon size={19} />} label="Pending" pathname={pathname} onClick={() => setMobileOpen(false)} badge={pendingCount} />
                       <SidebarLink href="/admin/analytics" icon={<ShieldIcon size={19} />} label="Analytics" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                      <SidebarLink href="/admin/activity-log" icon={<ClockIcon size={19} />} label="Activity Log" pathname={pathname} onClick={() => setMobileOpen(false)} />
                     </>
                   )}
                 </>
@@ -491,6 +493,21 @@ export default function Navbar({ user }: NavbarProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mobile Bottom Navigation (Students only) */}
+      {user && !isAdminOrNurse && mounted && (
+        <>
+          {/* Spacer so content isn't hidden behind bottom nav */}
+          <div className="h-[64px] lg:hidden" />
+          <nav className="fixed bottom-0 left-0 right-0 z-[1200] bg-white/95 backdrop-blur-xl lg:hidden flex items-center justify-around px-1 py-1.5" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <BottomNavLink href="/dashboard" icon={<DashboardIcon size={20} />} label="Home" pathname={pathname} />
+            <BottomNavLink href="/appointments" icon={<CalendarIcon size={20} />} label="Appts" pathname={pathname} />
+            <BottomNavLink href="/certificates" icon={<CertificateIcon size={20} />} label="Certs" pathname={pathname} />
+            <BottomNavLink href="/calendar" icon={<ClockIcon size={20} />} label="Calendar" pathname={pathname} />
+            <BottomNavLink href="/profile" icon={<UserIcon size={20} />} label="Profile" pathname={pathname} />
+          </nav>
+        </>
       )}
     </>
   );
@@ -567,6 +584,22 @@ function SidebarLink({ href, icon, label, pathname, onClick, badge }: {
       {badge !== undefined && badge > 0 && (
         <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">{badge}</span>
       )}
+    </Link>
+  );
+}
+
+/* ── Bottom nav link (mobile students) ── */
+function BottomNavLink({ href, icon, label, pathname }: {
+  href: string; icon: React.ReactNode; label: string; pathname: string;
+}) {
+  const isActive = pathname === href;
+  return (
+    <Link href={href} className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg no-underline transition-colors min-w-0 ${
+      isActive ? "text-primary" : "text-gray-400 hover:text-gray-600"
+    }`}>
+      <span className={isActive ? "text-primary" : "text-gray-400"}>{icon}</span>
+      <span className={`text-[10px] font-medium leading-tight ${isActive ? "text-primary" : "text-gray-400"}`}>{label}</span>
+      {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
     </Link>
   );
 }

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
+import { AlertCircleIcon } from "@/components/Icons";
 
 export default function NewCertificatePage() {
   const [user, setUser] = useState<any>(null);
@@ -48,6 +50,11 @@ export default function NewCertificatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // Check profile completion
+    if (!user.id_number || !user.course || !user.year_level) {
+      setError("Please complete your profile (ID Number, Course, Year Level) before submitting a request.");
+      return;
+    }
     setLoading(true);
 
     const today = new Date().toISOString().split("T")[0];
@@ -109,6 +116,19 @@ export default function NewCertificatePage() {
           <div className="p-[35px]">
             {error && <div className="bg-[#f8d7da] text-[#842029] p-4 rounded-[10px] mb-5 border-l-[5px] border-[#dc3545]">{error}</div>}
             {success && <div className="bg-[#d1e7dd] text-[#0f5132] p-4 rounded-[10px] mb-5 border-l-[5px] border-[#198754]">{success}</div>}
+
+            {/* Profile Incomplete Warning */}
+            {(!user.id_number || !user.course || !user.year_level) && (
+              <div className="bg-amber-50 border border-amber-200 rounded-[10px] p-4 mb-5 flex items-start gap-3">
+                <AlertCircleIcon size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[13px] font-semibold text-amber-800 m-0">Incomplete Profile</p>
+                  <p className="text-[12px] text-amber-600 m-0 mt-1">
+                    Please complete your <Link href="/profile" className="font-semibold underline">profile</Link> (ID Number, Course, Year Level) before submitting requests.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Auto-filled info */}
             <div className="bg-[#f4f8f5] rounded-[10px] p-5 mb-6">

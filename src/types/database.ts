@@ -27,7 +27,8 @@ export interface Appointment {
   appointment_date: string;
   purpose: string;
   remarks?: string;
-  status: "Pending" | "Approved" | "Rejected";
+  admin_remarks?: string;
+  status: "Pending" | "Approved" | "Rejected" | "Completed" | "Cancelled";
   created_at: string;
   updated_at: string;
 }
@@ -46,7 +47,8 @@ export interface Certificate {
   contact_number?: string;
   email?: string;
   remarks?: string;
-  status: "Pending" | "Approved" | "Rejected";
+  admin_remarks?: string;
+  status: "Pending" | "Approved" | "Rejected" | "Completed" | "Cancelled";
   created_at: string;
   updated_at: string;
 }
