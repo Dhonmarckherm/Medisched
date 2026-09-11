@@ -73,7 +73,7 @@ export default async function AdminDashboardPage() {
           <StatCard title="Pending" value={pendingTotal} icon={<ClockIcon size={18} />} color="amber" />
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions + QR Code */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
           <Link href="/admin/appointments" className="group flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 no-underline hover:border-gray-200 transition-all duration-150">
             <div className="w-9 h-9 rounded-[10px] bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
@@ -113,8 +113,11 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
+        {/* QR Code Section - Right below quick actions */}
+        <SignupQRWidget />
+
         {/* Pending Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Pending Appointments */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="flex justify-between items-center px-5 pt-5 pb-3">
@@ -213,13 +216,6 @@ export default async function AdminDashboardPage() {
                 </table>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* QR Code Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1">
-            <SignupQRWidget />
           </div>
         </div>
       </main>
