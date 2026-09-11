@@ -39,6 +39,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if token has expired (1 hour expiry)
+    if (user.verification_token_expires_at) {
+      const expiresAt = new Date(user.verification_token_expires_at);
+      if (expiresAt < new Date()) {
+        return NextResponse.json(
+          { error: "Verification link has expired. Please sign up again to receive a new verification email." },
+          { status: 400 }
+        );
+      }
+    }
+
     // Activate the user and clear the token
     const { error: updateError } = await supabase
       .from("users")
