@@ -90,9 +90,7 @@ function welcomeEmail(name: string, verifyUrl?: string) {
 </td></tr>
 <tr><td style="padding:16px 20px 0;text-align:center">
 <p style="margin:0;font-size:13px;color:#888;line-height:1.6">
-Click the button above to verify your email and activate your account.<br>
-If the button doesn't work, copy and paste this link:<br>
-<span style="color:#84B179;word-break:break-all;font-size:12px">${verifyUrl}</span>
+Click the button above to verify your email and activate your account.
 </p>
 </td></tr>
 </table>
