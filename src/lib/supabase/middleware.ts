@@ -55,6 +55,9 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/test-email") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email");
 
+  // Notification API requires auth (not public)
+  // /api/notifications is protected — handled by the route itself
+
   if (isPublicRoute) {
     return supabaseResponse;
   }
