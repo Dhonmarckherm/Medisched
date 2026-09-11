@@ -15,7 +15,8 @@ const COURSES = [
 
 const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 
-// Student ID validation: D19 to D(current year last 2 digits)
+// Student ID validation: D19-### to D(current year)-##### 
+// Format: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100; // e.g., 26 for 2026
 const MIN_YEAR_SHORT = 19;
 
@@ -23,12 +24,12 @@ function validateStudentId(id: string): string {
   const trimmed = id.trim().toUpperCase();
   if (!trimmed) return "ID number is required";
   
-  // Check format: D followed by 2 digits
-  const match = trimmed.match(/^D(\d{2})$/);
-  if (!match) return "ID must be in format D## (e.g., D23)";
+  // Check format: D##-### to D##-##### (2 digit year, dash, 3-5 digit sequence)
+  const match = trimmed.match(/^D(\d{2})-(\d{3,5})$/);
+  if (!match) return "ID must be in format D##-### (e.g., D23-003 or D23-00033)";
   
   const yearNum = parseInt(match[1], 10);
-  if (yearNum < MIN_YEAR_SHORT) return `ID must be D${MIN_YEAR_SHORT} or later`;
+  if (yearNum < MIN_YEAR_SHORT) return `ID year must be ${MIN_YEAR_SHORT} or later (e.g., D${MIN_YEAR_SHORT}-###)`;
   if (yearNum > CURRENT_YEAR_SHORT) return `ID cannot be from the future (max D${CURRENT_YEAR_SHORT})`;
   
   return "";
@@ -206,7 +207,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.idNumber ? 'border-red-300' : 'border-gray-200'}`}>
                 <IdCardIcon className="text-gray-400 mr-2" size={18} />
                 <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} onBlur={handleBlur} required
-                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="e.g., D23" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="e.g., D23-00033" />
               </div>
               {errors.idNumber && <p className="text-red-500 text-[12px] mt-1">{errors.idNumber}</p>}
             </div>
