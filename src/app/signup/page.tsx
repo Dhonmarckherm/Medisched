@@ -117,8 +117,8 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      addToast("success", "Account created successfully! Redirecting to login...");
-      setTimeout(() => router.push("/login?registered=true"), 1500);
+      addToast("success", "Account created! Check your email to verify and activate your account.");
+      setTimeout(() => router.push("/login?registered=true"), 2000);
     } catch {
       addToast("error", "An unexpected error occurred");
     } finally {

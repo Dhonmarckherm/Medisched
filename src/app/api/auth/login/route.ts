@@ -41,7 +41,20 @@ export async function POST(request: NextRequest) {
 
     // Check active status
     if (user.active_status !== "active") {
-      return NextResponse.json({ error: "Account is deactivated" }, { status: 403 });
+      // Check if they have a verification token (never verified)
+      const { data: fullUser } = await supabaseAdmin
+        .from("users")
+        .select("verification_token")
+        .eq("id", user.id)
+        .limit(1);
+      
+      if (fullUser && fullUser.length > 0 && fullUser[0].verification_token) {
+        return NextResponse.json(
+          { error: "Please verify your email before logging in. Check your inbox for the verification link.", unverified: true },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json({ error: "Account is deactivated. Contact admin for assistance." }, { status: 403 });
     }
 
     // Create a fresh server client with cookies to sign in

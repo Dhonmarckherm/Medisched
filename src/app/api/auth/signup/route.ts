@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 // Student ID validation: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
@@ -66,6 +67,11 @@ export async function POST(request: NextRequest) {
     // Hash password
     const password_hash = await bcrypt.hash(password, 12);
 
+    // Generate verification token
+    const verification_token = crypto.randomBytes(32).toString('hex');
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    const verifyUrl = `${siteUrl}/verify-email?token=${verification_token}`;
+
     // Create Supabase Auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -103,7 +109,8 @@ export async function POST(request: NextRequest) {
         course: course || null,
         year_level: year_level || null,
         role: "student",
-        active_status: "active",
+        active_status: "inactive", // Inactive until email verification
+        verification_token,
       })
       .select()
       .limit(1);
@@ -115,11 +122,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send welcome email (non-blocking)
-    sendWelcomeEmail(email, first_name).catch(() => {});
+    // Send welcome email with verification link (non-blocking)
+    sendWelcomeEmail(email, first_name, verifyUrl).catch(() => {});
 
     return NextResponse.json(
-      { message: "Account created successfully", user: dbUser[0] },
+      { message: "Account created. Please check your email to verify your account.", user: dbUser[0] },
       { status: 201 }
     );
   } catch (error) {
