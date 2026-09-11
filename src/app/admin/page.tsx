@@ -5,6 +5,7 @@ import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
 import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon, ChartIcon } from "@/components/Icons";
+import SignupQRWidget from "@/components/SignupQRWidget";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -113,7 +114,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Pending Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
           {/* Pending Appointments */}
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="flex justify-between items-center px-5 pt-5 pb-3">
@@ -212,6 +213,13 @@ export default async function AdminDashboardPage() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-1">
+            <SignupQRWidget />
           </div>
         </div>
       </main>
