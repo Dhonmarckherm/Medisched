@@ -5,7 +5,8 @@ import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
-import { CalendarIcon, CertificateIcon, ClockIcon, ArrowRightIcon } from "@/components/Icons";
+import { CalendarIcon, CertificateIcon, ClockIcon, ArrowRightIcon, QrCodeIcon, DownloadIcon } from "@/components/Icons";
+import { headers } from "next/headers";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -24,6 +25,17 @@ export default async function DashboardPage() {
   const accommodation = { data: accData?.[0] || null };
 
   const isAdminOrNurse = dbUser.role === "admin" || dbUser.role === "nurse";
+
+  // Build signup URL for QR code (admin only)
+  let signupUrl = "";
+  let qrImageUrl = "";
+  if (isAdminOrNurse) {
+    const headersList = await headers();
+    const host = headersList.get("host") || "medisched-cert.vercel.app";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    signupUrl = `${protocol}://${host}/signup`;
+    qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(signupUrl)}&margin=10`;
+  }
 
   return (
     <div className="min-h-screen bg-[#fafbfc]">
@@ -171,32 +183,57 @@ export default async function DashboardPage() {
 
             {/* Quick Links for admin/nurse */}
             {isAdminOrNurse && (
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h2 className="text-[15px] font-semibold text-[#111] mb-3 m-0">Quick Links</h2>
-                <div className="space-y-1">
-                  <Link href="/admin/appointments"
-                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
-                    <span className="flex items-center gap-2.5 text-[13px]">
-                      <CalendarIcon size={15} className="text-emerald-500" /> Appointments
-                    </span>
-                    <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
-                  </Link>
-                  <Link href="/admin/certificates"
-                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
-                    <span className="flex items-center gap-2.5 text-[13px]">
-                      <CertificateIcon size={15} className="text-purple-500" /> Certificates
-                    </span>
-                    <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
-                  </Link>
-                  <Link href="/admin/users"
-                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
-                    <span className="flex items-center gap-2.5 text-[13px]">
-                      <CalendarIcon size={15} className="text-blue-500" /> Users
-                    </span>
-                    <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
-                  </Link>
+              <>
+                <div className="bg-white rounded-xl border border-gray-100 p-5">
+                  <h2 className="text-[15px] font-semibold text-[#111] mb-3 m-0">Quick Links</h2>
+                  <div className="space-y-1">
+                    <Link href="/admin/appointments"
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
+                      <span className="flex items-center gap-2.5 text-[13px]">
+                        <CalendarIcon size={15} className="text-emerald-500" /> Appointments
+                      </span>
+                      <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
+                    </Link>
+                    <Link href="/admin/certificates"
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
+                      <span className="flex items-center gap-2.5 text-[13px]">
+                        <CertificateIcon size={15} className="text-purple-500" /> Certificates
+                      </span>
+                      <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
+                    </Link>
+                    <Link href="/admin/users"
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 no-underline text-gray-600 transition group">
+                      <span className="flex items-center gap-2.5 text-[13px]">
+                        <CalendarIcon size={15} className="text-blue-500" /> Users
+                      </span>
+                      <ArrowRightIcon size={13} className="text-gray-300 group-hover:text-gray-400 transition" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
+
+                {/* Registration QR Code */}
+                <div className="bg-white rounded-xl border border-gray-100 p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-[8px] bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                      <QrCodeIcon size={14} />
+                    </div>
+                    <h2 className="text-[14px] font-semibold text-[#111] m-0">Registration QR</h2>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white p-2 rounded-lg border border-gray-100 mb-3">
+                      <img src={qrImageUrl} alt="Signup QR Code" width={140} height={140} className="block" />
+                    </div>
+                    <p className="text-[11px] text-gray-400 text-center mb-2 m-0">Students scan to sign up</p>
+                    <div className="bg-gray-50 rounded px-2 py-1 text-[10px] text-gray-400 truncate w-full text-center mb-2 border border-gray-100">
+                      {signupUrl}
+                    </div>
+                    <a href={qrImageUrl} download="ISPSC-Signup-QR.png" target="_blank" rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-1.5 bg-primary text-white border-none rounded-lg px-3 py-2 text-[12px] font-medium no-underline hover:bg-primary-hover transition">
+                      <DownloadIcon size={12} /> Download QR
+                    </a>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
