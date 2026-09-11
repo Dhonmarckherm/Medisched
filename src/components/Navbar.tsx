@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon, LogoutIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon, LogoutIcon, DatabaseIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -433,6 +433,7 @@ export default function Navbar({ user }: NavbarProps) {
                       <SidebarLink href="/pending" icon={<BellIcon size={19} />} label="Pending" pathname={pathname} onClick={() => setMobileOpen(false)} badge={pendingCount} />
                       <SidebarLink href="/admin/analytics" icon={<ShieldIcon size={19} />} label="Analytics" pathname={pathname} onClick={() => setMobileOpen(false)} />
                       <SidebarLink href="/admin/activity-log" icon={<ClockIcon size={19} />} label="Activity Log" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                      <SidebarLink href="/admin/backup" icon={<DatabaseIcon size={19} />} label="Backup" pathname={pathname} onClick={() => setMobileOpen(false)} />
                     </>
                   )}
                 </>
