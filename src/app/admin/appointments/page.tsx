@@ -8,6 +8,8 @@ import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
 import { CheckCircleIcon, XCircleIcon, CalendarIcon, TrashIcon } from "@/components/Icons";
+import ActionModal from "@/components/ActionModal";
+import { logActivity } from "@/lib/activityLog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,6 +21,7 @@ export default function ManageAppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [modalItem, setModalItem] = useState<{ id: string; action: "Approved" | "Rejected"; name: string } | null>(null);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -34,13 +37,18 @@ export default function ManageAppointmentsPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAction = async (id: string, action: "Approved" | "Rejected") => {
+  const handleAction = async (id: string, action: "Approved" | "Rejected", adminRemarks: string) => {
     setActionLoadingId(id);
     const appt = appointments.find((a) => a.id === id);
-    const { error } = await supabase.from("appointments").update({ status: action }).eq("id", id);
+    const updateData: any = { status: action };
+    if (adminRemarks) updateData.admin_remarks = adminRemarks;
+    const { error } = await supabase.from("appointments").update(updateData).eq("id", id);
     if (error) { addToast("error", "Failed to update"); setActionLoadingId(null); return; }
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: action } : a)));
     addToast("success", `Appointment ${action.toLowerCase()} successfully`);
+
+    // Log activity
+    logActivity(`appointment_${action.toLowerCase()}`, "appointment", id, `${appt?.firstname} ${appt?.lastname} — ${appt?.purpose}`);
 
     // Send email notification
     const email = appt?.users?.email || appt?.email;
@@ -60,6 +68,7 @@ export default function ManageAppointmentsPage() {
       } catch { /* non-critical */ }
     }
     setActionLoadingId(null);
+    setModalItem(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -71,6 +80,7 @@ export default function ManageAppointmentsPage() {
       if (!res.ok) { addToast("error", data.error || "Failed to delete"); setActionLoadingId(null); return; }
       setAppointments((prev) => prev.filter((a) => a.id !== id));
       addToast("success", "Appointment deleted permanently");
+      logActivity("appointment_deleted", "appointment", id, "Deleted by admin");
     } catch { addToast("error", "An unexpected error occurred"); }
     setActionLoadingId(null);
   };
@@ -168,11 +178,11 @@ export default function ManageAppointmentsPage() {
                         <div className="flex gap-1.5">
                           {appt.status === "Pending" && (
                             <>
-                              <button onClick={() => handleAction(appt.id, "Approved")} disabled={actionLoadingId === appt.id}
+                              <button onClick={() => setModalItem({ id: appt.id, action: "Approved", name: `${appt.firstname} ${appt.lastname}` })} disabled={actionLoadingId === appt.id}
                                 className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-emerald-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} {actionLoadingId === appt.id ? "Approving..." : "Approve"}
+                                {actionLoadingId === appt.id ? <span className="inline-block w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full" style={{ animation: "spin 0.7s linear infinite" }} /> : <CheckCircleIcon size={14} />} Approve
                               </button>
-                              <button onClick={() => handleAction(appt.id, "Rejected")} disabled={actionLoadingId === appt.id}
+                              <button onClick={() => setModalItem({ id: appt.id, action: "Rejected", name: `${appt.firstname} ${appt.lastname}` })} disabled={actionLoadingId === appt.id}
                                 className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[12px] font-medium border-none cursor-pointer hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                 <XCircleIcon size={14} /> Reject
                               </button>
@@ -194,6 +204,17 @@ export default function ManageAppointmentsPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </main>
+
+      {/* Action Modal */}
+      <ActionModal
+        open={!!modalItem}
+        action={modalItem?.action || "Approved"}
+        itemName={modalItem?.name || ""}
+        onConfirm={(remarks) => modalItem && handleAction(modalItem.id, modalItem.action, remarks)}
+        onCancel={() => setModalItem(null)}
+        loading={!!actionLoadingId && !!modalItem}
+      />
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
