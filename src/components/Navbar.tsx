@@ -28,12 +28,10 @@ export default function Navbar({ user }: NavbarProps) {
   const avatarRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Track when student last viewed notifications (clears them on click)
   const [lastViewed, setLastViewed] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Load last viewed time from localStorage for students
     if (!isAdminOrNurse && user) {
       const stored = localStorage.getItem(`notif_last_viewed_${user.id}`);
       if (stored) setLastViewed(stored);
@@ -309,8 +307,8 @@ export default function Navbar({ user }: NavbarProps) {
               </button>
             </div>
           )}
-          {/* Hamburger menu - only for admin/nurse (students use bottom nav) */}
-          {isAdminOrNurse && (
+          {/* Hamburger menu - for admin/nurse and non-logged-in users (students use bottom nav) */}
+          {(isAdminOrNurse || !user) && (
             <button
               className={`lg:hidden bg-transparent border-none cursor-pointer p-2.5 rounded-lg transition-colors ${
                 mobileOpen ? "bg-gray-100 text-gray-900" : "hover:bg-black/[0.04] active:bg-black/[0.08] text-gray-600"
