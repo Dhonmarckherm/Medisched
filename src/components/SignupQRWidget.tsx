@@ -40,53 +40,61 @@ export default function SignupQRWidget() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 pt-5 pb-3">
-        <div className="w-8 h-8 rounded-[10px] bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-          <QrCodeIcon size={16} />
-        </div>
-        <div>
-          <h2 className="text-[15px] font-semibold text-[#111] m-0">Registration QR Code</h2>
-          <p className="text-[12px] text-gray-400 m-0">Students can scan to sign up</p>
-        </div>
-      </div>
-
-      <div className="px-5 pb-5 flex flex-col items-center">
-        {signupUrl ? (
-          <>
-            <div id="signup-qr" className="bg-white p-4 rounded-xl border border-gray-100 mb-3">
+    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
+      <div className="flex flex-col sm:flex-row items-center gap-6 p-5">
+        {/* QR Code */}
+        <div className="flex-shrink-0">
+          {signupUrl ? (
+            <div id="signup-qr" className="bg-white p-3 rounded-xl border border-gray-100">
               <QRCodeSVG
                 value={signupUrl}
-                size={160}
+                size={140}
                 bgColor="#ffffff"
                 fgColor="#1a1a2e"
                 level="M"
                 includeMargin={false}
               />
             </div>
-
-            <div className="flex items-center gap-2 mb-3 w-full">
-              <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-[12px] text-gray-500 truncate border border-gray-100">
-                {signupUrl}
-              </div>
-              <button
-                onClick={handleCopy}
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] font-medium text-gray-600 cursor-pointer hover:bg-gray-50 transition flex-shrink-0"
-              >
-                {copied ? "Copied!" : "Copy"}
-              </button>
+          ) : (
+            <div className="w-[140px] h-[140px] bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center">
+              <span className="text-gray-400 text-[12px]">Loading...</span>
             </div>
+          )}
+        </div>
 
-            <button
-              onClick={handleDownload}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-white border-none rounded-lg px-4 py-2.5 text-[13px] font-medium cursor-pointer hover:bg-primary-hover transition"
-            >
-              <DownloadIcon size={14} /> Download QR Image
-            </button>
-          </>
-        ) : (
-          <div className="py-8 text-gray-400 text-[13px]">Loading QR code...</div>
-        )}
+        {/* Info & Actions */}
+        <div className="flex-1 min-w-0 text-center sm:text-left">
+          <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
+            <div className="w-8 h-8 rounded-[10px] bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+              <QrCodeIcon size={16} />
+            </div>
+            <h2 className="text-[17px] font-semibold text-[#111] m-0">Registration QR Code</h2>
+          </div>
+          <p className="text-gray-400 text-[13px] mb-4">Students can scan this QR code or use the link below to sign up</p>
+
+          {signupUrl && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-[12px] text-gray-500 truncate border border-gray-100">
+                  {signupUrl}
+                </div>
+                <button
+                  onClick={handleCopy}
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] font-medium text-gray-600 cursor-pointer hover:bg-gray-50 transition flex-shrink-0"
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+
+              <button
+                onClick={handleDownload}
+                className="inline-flex items-center gap-2 bg-primary text-white border-none rounded-lg px-4 py-2.5 text-[13px] font-medium cursor-pointer hover:bg-primary-hover transition"
+              >
+                <DownloadIcon size={14} /> Download QR Image
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
