@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
     // Hash password
     const password_hash = await bcrypt.hash(password, 12);
 
-    // Generate verification token
+    // Generate verification token (expires in 1 hour)
     const verification_token = crypto.randomBytes(32).toString('hex');
+    const token_expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
     const verifyUrl = `${siteUrl}/verify-email?token=${verification_token}`;
 
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
         role: "student",
         active_status: "inactive", // Inactive until email verification
         verification_token,
+        verification_token_expires_at: token_expires_at,
       })
       .select()
       .limit(1);
