@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
 
 const COURSES = [
@@ -42,6 +42,8 @@ export default function SignupPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { addToast } = useToast();
 
@@ -237,8 +239,11 @@ export default function SignupPage() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Password</label>
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.password ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} required minLength={6}
+                <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} required minLength={6}
                   className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Min 6 characters" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
+                  {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
               </div>
               {errors.password && <p className="text-red-500 text-[12px] mt-1">{errors.password}</p>}
             </div>
@@ -247,8 +252,11 @@ export default function SignupPage() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm Password</label>
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.confirmPassword ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} required minLength={6}
+                <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} required minLength={6}
                   className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Re-enter password" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
+                  {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
               </div>
               {errors.confirmPassword && <p className="text-red-500 text-[12px] mt-1">{errors.confirmPassword}</p>}
             </div>
