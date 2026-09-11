@@ -41,12 +41,8 @@ export async function POST(request: NextRequest) {
       .update({ verification_token, verification_token_expires_at: token_expires_at })
       .eq("id", user.id);
 
-    // Build verify URL
-    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (!siteUrl) {
-      const vercelUrl = process.env.VERCEL_URL || "medisched-cert.vercel.app";
-      siteUrl = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
-    }
+    // Build verify URL — use production URL to avoid exposing preview URLs
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://medisched-cert.vercel.app";
     const verifyUrl = `${siteUrl}/verify-email?token=${verification_token}`;
 
     // Send email
