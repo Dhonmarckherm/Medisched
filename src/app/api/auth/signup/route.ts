@@ -70,7 +70,12 @@ export async function POST(request: NextRequest) {
     // Generate verification token (expires in 1 hour)
     const verification_token = crypto.randomBytes(32).toString('hex');
     const token_expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+    // Build site URL — VERCEL_URL doesn't include protocol
+    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!siteUrl) {
+      const vercelUrl = process.env.VERCEL_URL || 'medisched-cert.vercel.app';
+      siteUrl = vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`;
+    }
     const verifyUrl = `${siteUrl}/verify-email?token=${verification_token}`;
 
     // Create Supabase Auth user
@@ -125,7 +130,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Send welcome email with verification link (non-blocking)
-    sendWelcomeEmail(email, first_name, verifyUrl).catch(() => {});
+    sendWelcomeEmail(email, first_name, verifyUrl).catch((err) => {
+      console.error("Email send failed:", err);
+    });
 
     return NextResponse.json(
       { message: "Account created. Please check your email to verify your account.", user: dbUser[0] },
