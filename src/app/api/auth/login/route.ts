@@ -3,9 +3,20 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { authRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = authRateLimit.login(ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Please try again in ${rateLimitResult.retryAfter} seconds.` },
+        { status: 429, headers: { "Retry-After": String(rateLimitResult.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const { email, id_number, password } = body;
 

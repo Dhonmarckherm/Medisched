@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { authRateLimit } from "@/lib/rateLimit";
 
 // Student ID validation: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
@@ -22,6 +23,16 @@ function validateStudentId(id: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = authRateLimit.signup(ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: `Too many signup attempts. Please try again in ${rateLimitResult.retryAfter} seconds.` },
+        { status: 429, headers: { "Retry-After": String(rateLimitResult.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const { first_name, last_name, middle_name, email, id_number, password, course, year_level } = body;
 

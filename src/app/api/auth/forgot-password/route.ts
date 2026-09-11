@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendPasswordResetEmail } from "@/lib/email";
 import crypto from "crypto";
+import { authRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = authRateLimit.resetPassword(ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: `Too many reset attempts. Please try again in ${rateLimitResult.retryAfter} seconds.` },
+        { status: 429, headers: { "Retry-After": String(rateLimitResult.retryAfter) } }
+      );
+    }
+
     const { email } = await request.json();
     if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 });
 
