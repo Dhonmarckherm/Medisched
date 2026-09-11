@@ -7,7 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
-import { UsersIcon, ShieldIcon, UserXIcon, PlusIcon, LockIcon, MailIcon, UserIcon, XIcon } from "@/components/Icons";
+import { UsersIcon, ShieldIcon, UserXIcon, PlusIcon, LockIcon, MailIcon, UserIcon, XIcon, TrashIcon } from "@/components/Icons";
 import { logActivity } from "@/lib/activityLog";
 
 const ITEMS_PER_PAGE = 10;
@@ -20,6 +20,8 @@ export default function ManageUsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -63,6 +65,27 @@ export default function ManageUsersPage() {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, active_status: newStatus } : u)));
     addToast("success", `User ${newStatus === "active" ? "activated" : "deactivated"}`);
     logActivity(newStatus === "active" ? "user_activated" : "user_deactivated", "user", id, `${targetUser?.first_name} ${targetUser?.last_name}`);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/admin/delete?id=${deleteTarget.id}&type=user`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to delete user");
+        return;
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      addToast("success", `${deleteTarget.first_name} ${deleteTarget.last_name} has been deleted`);
+      logActivity("user_deleted", "user", deleteTarget.id, `${deleteTarget.first_name} ${deleteTarget.last_name} (${deleteTarget.role})`);
+      setDeleteTarget(null);
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -195,22 +218,28 @@ export default function ManageUsersPage() {
                       </td>
                       <td className="py-3 px-4"><StatusBadge status={u.active_status} /></td>
                       <td className="py-3 px-4">
-                        {/* Don't allow deactivating super admin */}
                         {u.is_super_admin ? (
                           <span className="text-[12px] text-gray-400 italic">Protected</span>
                         ) : (
-                          <button onClick={() => handleToggleStatus(u.id, u.active_status)}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium border-none cursor-pointer transition ${
-                              u.active_status === "active"
-                                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                            }`}>
-                            {u.active_status === "active" ? (
-                              <><UserXIcon size={14} /> Deactivate</>
-                            ) : (
-                              <><ShieldIcon size={14} /> Activate</>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => handleToggleStatus(u.id, u.active_status)}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium border-none cursor-pointer transition ${
+                                u.active_status === "active"
+                                  ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                              }`}>
+                              {u.active_status === "active" ? (
+                                <><UserXIcon size={14} /> Deactivate</>
+                              ) : (
+                                <><ShieldIcon size={14} /> Activate</>
+                              )}
+                            </button>
+                            <button onClick={() => setDeleteTarget(u)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-medium bg-red-50 text-red-500 border-none cursor-pointer hover:bg-red-100 transition"
+                              title="Delete user">
+                              <TrashIcon size={14} />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -233,6 +262,37 @@ export default function ManageUsersPage() {
             setShowCreateModal(false);
           }}
         />
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => !deleteLoading && setDeleteTarget(null)} />
+          <div className="relative bg-white rounded-2xl p-6 w-[90%] max-w-[400px] shadow-xl animate-scale-in">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <TrashIcon className="text-red-500" size={28} />
+              </div>
+              <h3 className="text-[18px] font-semibold text-[#1a1a2e] mb-1.5">Delete User?</h3>
+              <p className="text-[13px] text-gray-500 mb-1">
+                This will permanently delete <strong>{deleteTarget.first_name} {deleteTarget.last_name}</strong>
+              </p>
+              <p className="text-[12px] text-red-500 mb-5">
+                All their appointments and certificates will also be deleted. This cannot be undone.
+              </p>
+              <div className="flex gap-2.5">
+                <button onClick={() => setDeleteTarget(null)} disabled={deleteLoading}
+                  className="flex-1 py-2.5 border border-gray-200 rounded-lg text-[13px] font-medium text-gray-600 bg-white cursor-pointer hover:bg-gray-50 transition-colors disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleDeleteUser} disabled={deleteLoading}
+                  className="flex-1 py-2.5 bg-red-500 text-white rounded-lg text-[13px] font-medium border-none cursor-pointer hover:bg-red-600 transition-colors disabled:opacity-50">
+                  {deleteLoading ? "Deleting..." : "Delete Permanently"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
