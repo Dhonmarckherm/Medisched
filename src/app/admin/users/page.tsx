@@ -7,7 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
-import { UsersIcon, ShieldIcon, UserXIcon } from "@/components/Icons";
+import { UsersIcon, ShieldIcon, UserXIcon, PlusIcon, LockIcon, MailIcon, UserIcon, XIcon } from "@/components/Icons";
 import { logActivity } from "@/lib/activityLog";
 
 const ITEMS_PER_PAGE = 10;
@@ -19,8 +19,11 @@ export default function ManageUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
+
+  const isSuperAdmin = user?.is_super_admin === true;
 
   const fetchData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -38,6 +41,13 @@ export default function ManageUsersPage() {
 
   const handleChangeRole = async (id: string, role: string) => {
     const targetUser = users.find((u) => u.id === id);
+    
+    // Only super admin can change roles to admin/nurse
+    if ((role === "admin" || role === "nurse") && !isSuperAdmin) {
+      addToast("error", "Only super admin can assign admin/nurse roles");
+      return;
+    }
+
     const { error } = await supabase.from("users").update({ role }).eq("id", id);
     if (error) { addToast("error", "Failed to update role"); return; }
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
@@ -90,9 +100,26 @@ export default function ManageUsersPage() {
     <div className="min-h-screen" style={{ background: "#f8faf9" }}>
       <Navbar user={user} />
       <main className="pt-[100px] pb-10 w-[90%] max-w-[1200px] mx-auto">
-        <div className="mb-8">
-          <h1 className="text-[28px] font-bold text-[#1a1a2e]">Manage Users</h1>
-          <p className="text-gray-400 text-[14px] mt-1">Manage user roles and access</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-[28px] font-bold text-[#1a1a2e] flex items-center gap-2">
+              Manage Users
+              {isSuperAdmin && (
+                <span className="text-[11px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                  Super Admin
+                </span>
+              )}
+            </h1>
+            <p className="text-gray-400 text-[14px] mt-1">Manage user roles and access</p>
+          </div>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-[14px] font-medium border-none cursor-pointer hover:bg-primary-hover transition-colors"
+            >
+              <PlusIcon size={16} /> Create Staff Account
+            </button>
+          )}
         </div>
 
         {/* Search & Filter */}
@@ -143,7 +170,12 @@ export default function ManageUsersPage() {
                             {u.first_name?.[0]}{u.last_name?.[0]}
                           </div>
                           <div>
-                            <p className="text-[14px] text-gray-700 font-medium m-0">{u.first_name} {u.last_name}</p>
+                            <p className="text-[14px] text-gray-700 font-medium m-0 flex items-center gap-1.5">
+                              {u.first_name} {u.last_name}
+                              {u.is_super_admin && (
+                                <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">SA</span>
+                              )}
+                            </p>
                             <p className="text-[12px] text-gray-400 m-0 sm:hidden">{u.email}</p>
                           </div>
                         </div>
@@ -151,8 +183,11 @@ export default function ManageUsersPage() {
                       <td className="py-3 px-4 text-[14px] text-gray-500 hidden sm:table-cell">{u.email}</td>
                       <td className="py-3 px-4 text-[14px] text-gray-500 hidden md:table-cell">{u.id_number}</td>
                       <td className="py-3 px-4">
-                        <select value={u.role} onChange={(e) => handleChangeRole(u.id, e.target.value)}
-                          className="text-[13px] border border-gray-200 rounded-lg py-1.5 px-2.5 outline-none focus:border-primary bg-white text-gray-600 cursor-pointer">
+                        <select 
+                          value={u.role} 
+                          onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                          disabled={u.is_super_admin || (!isSuperAdmin && (u.role === "admin" || u.role === "nurse"))}
+                          className="text-[13px] border border-gray-200 rounded-lg py-1.5 px-2.5 outline-none focus:border-primary bg-white text-gray-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                           <option value="student">Student</option>
                           <option value="nurse">Nurse</option>
                           <option value="admin">Admin</option>
@@ -160,18 +195,23 @@ export default function ManageUsersPage() {
                       </td>
                       <td className="py-3 px-4"><StatusBadge status={u.active_status} /></td>
                       <td className="py-3 px-4">
-                        <button onClick={() => handleToggleStatus(u.id, u.active_status)}
-                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium border-none cursor-pointer transition ${
-                            u.active_status === "active"
-                              ? "bg-red-50 text-red-600 hover:bg-red-100"
-                              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                          }`}>
-                          {u.active_status === "active" ? (
-                            <><UserXIcon size={14} /> Deactivate</>
-                          ) : (
-                            <><ShieldIcon size={14} /> Activate</>
-                          )}
-                        </button>
+                        {/* Don't allow deactivating super admin */}
+                        {u.is_super_admin ? (
+                          <span className="text-[12px] text-gray-400 italic">Protected</span>
+                        ) : (
+                          <button onClick={() => handleToggleStatus(u.id, u.active_status)}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium border-none cursor-pointer transition ${
+                              u.active_status === "active"
+                                ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                            }`}>
+                            {u.active_status === "active" ? (
+                              <><UserXIcon size={14} /> Deactivate</>
+                            ) : (
+                              <><ShieldIcon size={14} /> Activate</>
+                            )}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -183,6 +223,137 @@ export default function ManageUsersPage() {
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       </main>
+
+      {/* Create Staff Account Modal */}
+      {showCreateModal && (
+        <CreateStaffModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={(newUser) => {
+            setUsers(prev => [newUser, ...prev]);
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Create Staff Modal ── */
+function CreateStaffModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (user: any) => void }) {
+  const [formData, setFormData] = useState({
+    firstName: "", lastName: "", email: "", password: "", role: "nurse",
+  });
+  const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      addToast("error", "Please fill in all required fields");
+      return;
+    }
+    if (formData.password.length < 6) {
+      addToast("error", "Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/create-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to create account");
+        return;
+      }
+      addToast("success", `${formData.role === "admin" ? "Admin" : "Nurse"} account created! Welcome email sent.`);
+      logActivity("staff_created", "user", data.user?.id, `${data.user?.first_name} ${data.user?.last_name} (${formData.role})`);
+      onSuccess(data.user);
+    } catch {
+      addToast("error", "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl w-[90%] max-w-[440px] shadow-xl animate-scale-in overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+          <div>
+            <h3 className="text-[18px] font-semibold text-[#1a1a2e] m-0">Create Staff Account</h3>
+            <p className="text-[12px] text-gray-400 mt-0.5 m-0">Add a new admin or nurse</p>
+          </div>
+          <button onClick={onClose} className="bg-transparent border-none cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <XIcon size={18} className="text-gray-400" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[13px] font-medium text-slate-700 mb-1.5">First Name *</label>
+              <div className="flex items-center border border-slate-200 rounded-lg px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                <UserIcon className="text-gray-400 mr-2" size={16} />
+                <input type="text" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="First" required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Last Name *</label>
+              <div className="flex items-center border border-slate-200 rounded-lg px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                <UserIcon className="text-gray-400 mr-2" size={16} />
+                <input type="text" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Last" required />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Email *</label>
+            <div className="flex items-center border border-slate-200 rounded-lg px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+              <MailIcon className="text-gray-400 mr-2" size={16} />
+              <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="staff@email.com" required />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Password *</label>
+            <div className="flex items-center border border-slate-200 rounded-lg px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+              <LockIcon className="text-gray-400 mr-2" size={16} />
+              <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})}
+                className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" required minLength={6} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-medium text-slate-700 mb-1.5">Role *</label>
+            <select value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}
+              className="w-full py-2.5 border border-slate-200 rounded-lg px-3 text-[14px] bg-white text-gray-700 outline-none focus:border-primary">
+              <option value="nurse">Nurse</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2.5 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 rounded-lg text-[13px] font-medium text-gray-600 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading}
+              className="flex-1 py-2.5 bg-primary text-white rounded-lg text-[13px] font-medium border-none cursor-pointer hover:bg-primary-hover transition-colors disabled:opacity-50">
+              {loading ? "Creating..." : "Create Account"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

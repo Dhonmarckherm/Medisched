@@ -10,6 +10,7 @@ export interface User {
   year_level?: string;
   contact_number?: string;
   role: "student" | "nurse" | "admin";
+  is_super_admin?: boolean;
   active_status: "active" | "inactive";
   created_at: string;
   updated_at: string;
