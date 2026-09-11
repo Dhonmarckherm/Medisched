@@ -12,6 +12,7 @@ export interface User {
   role: "student" | "nurse" | "admin";
   is_super_admin?: boolean;
   active_status: "active" | "inactive";
+  verification_token?: string;
   created_at: string;
   updated_at: string;
 }

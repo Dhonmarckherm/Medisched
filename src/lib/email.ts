@@ -81,15 +81,33 @@ ${content}
 </html>`;
 }
 
-function welcomeEmail(name: string) {
+function welcomeEmail(name: string, verifyUrl?: string) {
+  const verifyButton = verifyUrl ? `
+<!-- Verify Button -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
+<tr><td align="center">
+<a href="${verifyUrl}" style="display:inline-block;padding:16px 48px;background:#84B179;color:#fff;text-decoration:none;border-radius:12px;font-size:16px;font-weight:600;letter-spacing:0.3px">Verify My Account</a>
+</td></tr>
+<tr><td style="padding:16px 20px 0;text-align:center">
+<p style="margin:0;font-size:13px;color:#888;line-height:1.6">
+Click the button above to verify your email and activate your account.<br>
+If the button doesn't work, copy and paste this link:<br>
+<span style="color:#84B179;word-break:break-all;font-size:12px">${verifyUrl}</span>
+</p>
+</td></tr>
+</table>
+` : '';
+
   return baseLayout("Welcome to ISPSC Clinic", `
 <div style="margin-bottom:32px">
 <h1 style="margin:0 0 12px;font-size:26px;color:#111;font-weight:700;letter-spacing:-0.3px">Hello, ${name}!</h1>
 <p style="margin:0;font-size:16px;color:#555;line-height:1.8">
 Welcome to the ISPSC Clinic Candon Campus! &#127891;<br>
-Your account has been successfully created. You can now book appointments, request medical certificates, and track your requests — all in one place.
+Your account has been created. Please verify your email to activate your account.
 </p>
 </div>
+
+${verifyButton}
 
 <!-- Feature Cards -->
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
@@ -143,7 +161,7 @@ Your account has been successfully created. You can now book appointments, reque
 </table>
 
 <p style="margin:0;font-size:15px;color:#555;line-height:1.7">
-Log in to your dashboard to get started. If you have any questions or need assistance, feel free to visit us at the clinic. We're here to help!
+After verification, log in to your dashboard to get started. If you have any questions or need assistance, feel free to visit us at the clinic.
 </p>
 
 <p style="margin:24px 0 0;font-size:14px;color:#84B179;font-weight:600">
@@ -234,13 +252,13 @@ Thank you for using the ISPSC Clinic system. ${isApproved ? "We hope you are doi
 
 /* ── Send Functions ── */
 
-export async function sendWelcomeEmail(to: string, name: string) {
+export async function sendWelcomeEmail(to: string, name: string, verifyUrl?: string) {
   try {
-    const html = welcomeEmail(name);
+    const html = welcomeEmail(name, verifyUrl);
     await transporter.sendMail({
       from: FROM,
       to,
-      subject: "Welcome to MEDISCHED CERT",
+      subject: verifyUrl ? "Verify Your Account — MEDISCHED CERT" : "Welcome to MEDISCHED CERT",
       html,
       text: htmlToText(html),
     });
