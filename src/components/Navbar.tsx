@@ -527,13 +527,11 @@ export default function Navbar({ user }: NavbarProps) {
 function NavLink({ href, pathname, children }: { href: string; pathname: string; children: React.ReactNode }) {
   const isActive = pathname === href;
   return (
-    <li>
-      <Link href={href} className={`no-underline text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors duration-150 ${
-        isActive ? "text-primary bg-primary/[0.07]" : "text-gray-500 hover:text-gray-800 hover:bg-black/[0.03]"
-      }`}>
-        {children}
-      </Link>
-    </li>
+    <Link href={href} className={`no-underline text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors duration-150 ${
+      isActive ? "text-primary bg-primary/[0.07]" : "text-gray-500 hover:text-gray-800 hover:bg-black/[0.03]"
+    }`}>
+      {children}
+    </Link>
   );
 }
 
