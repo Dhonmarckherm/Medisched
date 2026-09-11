@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { CalendarIcon, CertificateIcon, CheckCircleIcon, ArrowRightIcon, HospitalIcon, ShieldIcon } from "@/components/Icons";
 
 export default async function HomePage() {
@@ -21,17 +22,18 @@ export default async function HomePage() {
       dbUser = data?.[0] || null;
     }
 
-    // Fetch real stats
+    // Fetch real stats using service client (bypasses RLS so stats show even when logged out)
+    const supabaseAdmin = createServiceClient();
     const [appts, certs, students] = await Promise.all([
-      supabase.from("appointments").select("id", { count: "exact", head: true }),
-      supabase.from("certificates").select("id", { count: "exact", head: true }),
-      supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "student"),
+      supabaseAdmin.from("appointments").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("certificates").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("role", "student"),
     ]);
     totalAppointments = appts.count || 0;
     totalCertificates = certs.count || 0;
     totalStudents = students.count || 0;
   } catch {
-    // Not logged in or error fetching stats
+    // Error fetching stats
   }
 
   return (
