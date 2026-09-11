@@ -58,7 +58,7 @@ function LoginForm() {
       addToast("success", "Login successful! Redirecting...");
 
       if (data.user.role === "admin" || data.user.role === "nurse") {
-        setTimeout(() => router.push("/admin"), 800);
+        setTimeout(() => router.push("/dashboard"), 800);
       } else {
         setTimeout(() => router.push("/dashboard"), 800);
       }
