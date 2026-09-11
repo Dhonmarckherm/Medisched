@@ -4,6 +4,21 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
+// Student ID validation: D19 to D(current year last 2 digits)
+const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
+const MIN_YEAR_SHORT = 19;
+
+function validateStudentId(id: string): string | null {
+  const trimmed = id.trim().toUpperCase();
+  if (!trimmed) return "ID number is required";
+  const match = trimmed.match(/^D(\d{2})$/);
+  if (!match) return "ID must be in format D## (e.g., D23)";
+  const yearNum = parseInt(match[1], 10);
+  if (yearNum < MIN_YEAR_SHORT) return `ID must be D${MIN_YEAR_SHORT} or later`;
+  if (yearNum > CURRENT_YEAR_SHORT) return `ID cannot be from the future`;
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -22,6 +37,12 @@ export async function POST(request: NextRequest) {
         { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
+    }
+
+    // Validate student ID format
+    const idError = validateStudentId(id_number);
+    if (idError) {
+      return NextResponse.json({ error: idError }, { status: 400 });
     }
 
     // Use anon client for auth (signUp), service client for DB operations (bypasses RLS)

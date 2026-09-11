@@ -15,6 +15,25 @@ const COURSES = [
 
 const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
 
+// Student ID validation: D19 to D(current year last 2 digits)
+const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100; // e.g., 26 for 2026
+const MIN_YEAR_SHORT = 19;
+
+function validateStudentId(id: string): string {
+  const trimmed = id.trim().toUpperCase();
+  if (!trimmed) return "ID number is required";
+  
+  // Check format: D followed by 2 digits
+  const match = trimmed.match(/^D(\d{2})$/);
+  if (!match) return "ID must be in format D## (e.g., D23)";
+  
+  const yearNum = parseInt(match[1], 10);
+  if (yearNum < MIN_YEAR_SHORT) return `ID must be D${MIN_YEAR_SHORT} or later`;
+  if (yearNum > CURRENT_YEAR_SHORT) return `ID cannot be from the future (max D${CURRENT_YEAR_SHORT})`;
+  
+  return "";
+}
+
 export default function SignupPage() {
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", middleName: "", email: "", idNumber: "",
@@ -43,7 +62,7 @@ export default function SignupPage() {
       case "email":
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? "" : "Invalid email format";
       case "idNumber":
-        return value.trim() ? "" : "ID number is required";
+        return validateStudentId(value);
       case "password":
         return value.length >= 6 ? "" : "Password must be at least 6 characters";
       case "confirmPassword":
@@ -187,7 +206,7 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.idNumber ? 'border-red-300' : 'border-gray-200'}`}>
                 <IdCardIcon className="text-gray-400 mr-2" size={18} />
                 <input type="text" name="idNumber" value={formData.idNumber} onChange={handleChange} onBlur={handleBlur} required
-                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Your ID number" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="e.g., D23" />
               </div>
               {errors.idNumber && <p className="text-red-500 text-[12px] mt-1">{errors.idNumber}</p>}
             </div>
