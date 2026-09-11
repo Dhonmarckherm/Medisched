@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon } from "@/components/Icons";
+import { MailIcon, LockIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
 
 export default function LoginPage() {
@@ -17,6 +17,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,7 +50,7 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        addToast("error", data.error || "Login failed");
+        addToast("error", "Please check your Email, ID Number, and Password");
         setLoading(false);
         return;
       }
@@ -115,8 +116,13 @@ function LoginForm() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Password</label>
               <div className="flex items-center border border-gray-200 rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2 flex-shrink-0" size={18} />
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
                   className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Enter password" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0"
+                  title={showPassword ? "Hide password" : "Show password"}>
+                  {showPassword ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
+                </button>
               </div>
             </div>
           </div>
