@@ -4,8 +4,8 @@ import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
 import Link from "next/link";
-import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon, ChartIcon } from "@/components/Icons";
-import SignupQRWidget from "@/components/SignupQRWidget";
+import { headers } from "next/headers";
+import { CalendarIcon, CertificateIcon, UsersIcon, ClockIcon, ArrowRightIcon, ChartIcon, QrCodeIcon, DownloadIcon } from "@/components/Icons";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -36,6 +36,13 @@ export default async function AdminDashboardPage() {
 
   const isAdmin = dbUser.role === "admin";
   const pendingTotal = (pendingAppointments ?? 0) + (pendingCertificates ?? 0);
+
+  // Build signup URL for QR code
+  const headersList = await headers();
+  const host = headersList.get("host") || "medisched-cert.vercel.app";
+  const protocol = headersList.get("x-forwarded-proto") || "https";
+  const signupUrl = `${protocol}://${host}/signup`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(signupUrl)}&margin=10`;
 
   return (
     <div className="min-h-screen bg-[#fafbfc]">
@@ -113,8 +120,30 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* QR Code Section - Right below quick actions */}
-        <SignupQRWidget />
+        {/* QR Code Section */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6 p-5">
+            <div className="flex-shrink-0 bg-white p-3 rounded-xl border border-gray-100">
+              <img src={qrImageUrl} alt="Signup QR Code" width={160} height={160} className="block" />
+            </div>
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
+                <div className="w-8 h-8 rounded-[10px] bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                  <QrCodeIcon size={16} />
+                </div>
+                <h2 className="text-[17px] font-semibold text-[#111] m-0">Registration QR Code</h2>
+              </div>
+              <p className="text-gray-400 text-[13px] mb-4">Students can scan this QR code to sign up</p>
+              <div className="bg-gray-50 rounded-lg px-3 py-2 text-[12px] text-gray-500 truncate border border-gray-100 mb-3">
+                {signupUrl}
+              </div>
+              <a href={qrImageUrl} download="ISPSC-Signup-QR.png" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-primary text-white border-none rounded-lg px-4 py-2.5 text-[13px] font-medium no-underline hover:bg-primary-hover transition">
+                <DownloadIcon size={14} /> Download QR Image
+              </a>
+            </div>
+          </div>
+        </div>
 
         {/* Pending Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
