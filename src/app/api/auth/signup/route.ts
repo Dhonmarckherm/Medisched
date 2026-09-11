@@ -4,17 +4,17 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
-// Student ID validation: D19 to D(current year last 2 digits)
+// Student ID validation: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
 const MIN_YEAR_SHORT = 19;
 
 function validateStudentId(id: string): string | null {
   const trimmed = id.trim().toUpperCase();
   if (!trimmed) return "ID number is required";
-  const match = trimmed.match(/^D(\d{2})$/);
-  if (!match) return "ID must be in format D## (e.g., D23)";
+  const match = trimmed.match(/^D(\d{2})-(\d{3,5})$/);
+  if (!match) return "ID must be in format D##-### (e.g., D23-003 or D23-00033)";
   const yearNum = parseInt(match[1], 10);
-  if (yearNum < MIN_YEAR_SHORT) return `ID must be D${MIN_YEAR_SHORT} or later`;
+  if (yearNum < MIN_YEAR_SHORT) return `ID year must be ${MIN_YEAR_SHORT} or later`;
   if (yearNum > CURRENT_YEAR_SHORT) return `ID cannot be from the future`;
   return null;
 }
