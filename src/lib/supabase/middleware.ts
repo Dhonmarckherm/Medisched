@@ -28,6 +28,33 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // License gate check — block everything until system is activated
+  const licensePublicRoutes = ["/license", "/api/license"];
+  const isLicenseRoute = licensePublicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
+
+  if (!isLicenseRoute) {
+    try {
+      const supabaseAdmin = getAdminClient();
+      const { data: licenseData } = await supabaseAdmin
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "license_activated")
+        .single();
+
+      const licenseValue = (licenseData as { setting_value: string } | null)?.setting_value;
+      if (!licenseValue || licenseValue !== "true") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/license";
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      // If table doesn't exist or query fails, redirect to license page
+      const url = request.nextUrl.clone();
+      url.pathname = "/license";
+      return NextResponse.redirect(url);
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -53,7 +80,7 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes - skip auth check
   const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/test-email") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email");
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/test-email") || pathname.startsWith("/api/license") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email") || pathname === "/license";
 
   // Notification API requires auth (not public)
   // /api/notifications is protected — handled by the route itself

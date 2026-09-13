@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BellIcon, CalendarIcon, CertificateIcon, UsersIcon } from "@/components/Icons";
 import Link from "next/link";
 
@@ -19,15 +19,105 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [browserNotifEnabled, setBrowserNotifEnabled] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+  const prevUnreadRef = useRef<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
+  // Check if browser notifications are supported and get current permission
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotifPermission(Notification.permission);
+      // Check if user previously enabled browser notifications
+      const enabled = localStorage.getItem("browser_notif_enabled");
+      if (enabled === "true" && Notification.permission === "granted") {
+        setBrowserNotifEnabled(true);
+      }
+    }
+  }, []);
+
+  // Show a browser popup notification
+  const showBrowserPopup = useCallback((notif: Notification) => {
+    if (!browserNotifEnabled || notifPermission !== "granted") return;
+    if (prevUnreadRef.current.has(notif.id)) return;
+    prevUnreadRef.current.add(notif.id);
+
+    // Keep only last 50 to prevent memory leak
+    if (prevUnreadRef.current.size > 50) {
+      const first = prevUnreadRef.current.values().next().value;
+      if (first) prevUnreadRef.current.delete(first);
+    }
+
+    const popup = new Notification(notif.title, {
+      body: notif.message,
+      icon: "/icons/logo.svg",
+      badge: "/icons/logo.svg",
+      tag: notif.id,
+      requireInteraction: false,
+    });
+
+    popup.onclick = () => {
+      window.focus();
+      if (notif.link) {
+        window.location.href = notif.link;
+      } else {
+        window.location.href = "/dashboard";
+      }
+      popup.close();
+    };
+
+    setTimeout(() => popup.close(), 6000);
+  }, [browserNotifEnabled, notifPermission]);
+
+  // Request browser notification permission
+  const enableBrowserNotifications = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      alert("Your browser does not support notifications");
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotifPermission(permission);
+
+      if (permission === "granted") {
+        setBrowserNotifEnabled(true);
+        localStorage.setItem("browser_notif_enabled", "true");
+
+        // Show a test notification
+        new Notification("Notifications Enabled!", {
+          body: "You'll now receive popup alerts for new updates.",
+          icon: "/icons/logo.svg",
+        });
+      } else if (permission === "denied") {
+        alert("Notification permission was denied. Please enable it in your browser settings.");
+      }
+    } catch {
+      alert("Failed to request notification permission");
+    }
+  };
+
+  const disableBrowserNotifications = () => {
+    setBrowserNotifEnabled(false);
+    localStorage.setItem("browser_notif_enabled", "false");
+  };
+
+  const fetchNotifications = async (isPolling = false) => {
     try {
       const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications);
+        const newNotifs: Notification[] = data.notifications || [];
+        setNotifications(newNotifs);
         setUnreadCount(data.unreadCount);
+
+        // If polling and browser notifs enabled, show popups for unread ones
+        if (isPolling && browserNotifEnabled) {
+          const unreadNotifs = newNotifs.filter((n) => !n.is_read);
+          for (const notif of unreadNotifs) {
+            showBrowserPopup(notif);
+          }
+        }
       }
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
@@ -37,9 +127,9 @@ export default function NotificationBell() {
   useEffect(() => {
     fetchNotifications();
     // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => fetchNotifications(true), 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [browserNotifEnabled]);
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -156,8 +246,29 @@ export default function NotificationBell() {
             )}
           </div>
 
+          {/* Browser Notification Toggle */}
+          <div className="px-4 py-2.5 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500">
+                {browserNotifEnabled ? "Popup alerts on" : "Popup alerts off"}
+              </span>
+            </div>
+            <button
+              onClick={browserNotifEnabled ? disableBrowserNotifications : enableBrowserNotifications}
+              className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer border-none ${
+                browserNotifEnabled ? "bg-primary" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  browserNotifEnabled ? "left-[18px]" : "left-0.5"
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Notifications List */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[350px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="py-10 flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
