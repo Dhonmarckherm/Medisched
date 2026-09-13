@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
     if (!rateLimitResult.success) {
       await logLoginAttempt({
         email: "unknown",
-        ipAddress: ip,
         userAgent,
         status: "rate_limited",
         failureReason: "rate_limit_exceeded",
@@ -43,7 +42,6 @@ export async function POST(request: NextRequest) {
     if (detectSQLInjection(rawEmail) || detectSQLInjection(rawIdNumber)) {
       await logLoginAttempt({
         email: rawEmail,
-        ipAddress: ip,
         userAgent,
         status: "failed",
         failureReason: "sql_injection_detected",
@@ -63,7 +61,6 @@ export async function POST(request: NextRequest) {
     if (emailError || !emailUsers || emailUsers.length === 0) {
       await logLoginAttempt({
         email,
-        ipAddress: ip,
         userAgent,
         status: "failed",
         failureReason: "invalid_email",
@@ -79,7 +76,6 @@ export async function POST(request: NextRequest) {
       await logLoginAttempt({
         userId: user.id,
         email,
-        ipAddress: ip,
         userAgent,
         status: "locked",
         failureReason: "account_locked",
@@ -96,7 +92,6 @@ export async function POST(request: NextRequest) {
       await logLoginAttempt({
         userId: user.id,
         email,
-        ipAddress: ip,
         userAgent,
         status: failResult.locked ? "locked" : "failed",
         failureReason: "invalid_id_number",
@@ -121,7 +116,6 @@ export async function POST(request: NextRequest) {
       await logLoginAttempt({
         userId: user.id,
         email,
-        ipAddress: ip,
         userAgent,
         status: failResult.locked ? "locked" : "failed",
         failureReason: "invalid_password",
@@ -151,7 +145,6 @@ export async function POST(request: NextRequest) {
         await logLoginAttempt({
           userId: user.id,
           email,
-          ipAddress: ip,
           userAgent,
           status: "failed",
           failureReason: "email_not_verified",
@@ -164,7 +157,6 @@ export async function POST(request: NextRequest) {
       await logLoginAttempt({
         userId: user.id,
         email,
-        ipAddress: ip,
         userAgent,
         status: "failed",
         failureReason: "account_deactivated",
@@ -177,7 +169,6 @@ export async function POST(request: NextRequest) {
     await logLoginAttempt({
       userId: user.id,
       email,
-      ipAddress: ip,
       userAgent,
       status: "success",
     });

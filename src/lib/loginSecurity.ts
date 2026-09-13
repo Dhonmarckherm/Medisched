@@ -19,13 +19,12 @@ const LOCKOUT_DURATION_MINUTES = 15;
 interface LoginLogParams {
   userId?: string;
   email: string;
-  ipAddress: string;
   userAgent: string;
   status: "success" | "failed" | "locked" | "rate_limited";
   failureReason?: string;
 }
 
-// Log a login attempt to the database
+// Log a login attempt to the database (no IP logging for privacy)
 export async function logLoginAttempt(params: LoginLogParams) {
   const supabase = getAdminClient();
   
@@ -33,7 +32,7 @@ export async function logLoginAttempt(params: LoginLogParams) {
     await supabase.from("login_logs").insert({
       user_id: params.userId || null,
       email: params.email,
-      ip_address: params.ipAddress,
+      ip_address: null, // Privacy: IP addresses are not logged
       user_agent: params.userAgent,
       status: params.status,
       failure_reason: params.failureReason || null,
