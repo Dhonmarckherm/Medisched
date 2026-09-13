@@ -140,8 +140,8 @@ export default function Navbar({ user }: NavbarProps) {
             {user ? (
               <>
                 <li><NavLink href="/dashboard" pathname={pathname}>Dashboard</NavLink></li>
-                <li><NavLink href="/appointments" pathname={pathname}>Appointments</NavLink></li>
-                <li><NavLink href="/certificates" pathname={pathname}>Certificates</NavLink></li>
+                <li><NavLink href={isAdminOrNurse ? "/admin/appointments" : "/appointments"} pathname={pathname}>Appointments</NavLink></li>
+                <li><NavLink href={isAdminOrNurse ? "/admin/certificates" : "/certificates"} pathname={pathname}>Certificates</NavLink></li>
                 <li><NavLink href="/calendar" pathname={pathname}>Calendar</NavLink></li>
                 {isAdminOrNurse && (
                   <>
@@ -422,8 +422,8 @@ export default function Navbar({ user }: NavbarProps) {
               {user ? (
                 <>
                   <SidebarLink href="/dashboard" icon={<DashboardIcon size={19} />} label="Dashboard" pathname={pathname} onClick={() => setMobileOpen(false)} />
-                  <SidebarLink href="/appointments" icon={<CalendarIcon size={19} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
-                  <SidebarLink href="/certificates" icon={<CertificateIcon size={19} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href={isAdminOrNurse ? "/admin/appointments" : "/appointments"} icon={<CalendarIcon size={19} />} label="Appointments" pathname={pathname} onClick={() => setMobileOpen(false)} />
+                  <SidebarLink href={isAdminOrNurse ? "/admin/certificates" : "/certificates"} icon={<CertificateIcon size={19} />} label="Certificates" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/calendar" icon={<ClockIcon size={19} />} label="Calendar" pathname={pathname} onClick={() => setMobileOpen(false)} />
                   <SidebarLink href="/profile" icon={<UserIcon size={19} />} label="Profile" pathname={pathname} onClick={() => setMobileOpen(false)} />
 
