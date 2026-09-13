@@ -4,7 +4,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { authRateLimit } from "@/lib/rateLimit";
+import { dbRateLimit } from "@/lib/rateLimitDb";
+import { sanitizeEmail, sanitizeIdNumber, sanitizeName, detectSQLInjection } from "@/lib/sanitize";
 
 // Student ID validation: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
@@ -23,9 +24,9 @@ function validateStudentId(id: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
+    // Persistent rate limiting
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    const rateLimitResult = authRateLimit.signup(ip);
+    const rateLimitResult = await dbRateLimit.signup(ip);
     if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: `Too many signup attempts. Please try again in ${rateLimitResult.retryAfter} seconds.` },
@@ -34,15 +35,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { first_name, last_name, middle_name, email, id_number, password, course, year_level } = body;
+    const { first_name: rawFirst, last_name: rawLast, middle_name: rawMiddle, email: rawEmail, id_number: rawIdNumber, password, course, year_level } = body;
 
     // Validate required fields
-    if (!first_name || !last_name || !email || !id_number || !password) {
+    if (!rawFirst || !rawLast || !rawEmail || !rawIdNumber || !password) {
       return NextResponse.json(
         { error: "All required fields must be filled" },
         { status: 400 }
       );
     }
+
+    // SQL injection detection
+    if (detectSQLInjection(rawEmail) || detectSQLInjection(rawFirst) || detectSQLInjection(rawLast)) {
+      return NextResponse.json({ error: "Invalid input detected" }, { status: 400 });
+    }
+
+    // Input sanitization
+    const first_name = sanitizeName(rawFirst);
+    const last_name = sanitizeName(rawLast);
+    const middle_name = rawMiddle ? sanitizeName(rawMiddle) : "";
+    const email = sanitizeEmail(rawEmail);
+    const id_number = sanitizeIdNumber(rawIdNumber);
 
     if (password.length < 6) {
       return NextResponse.json(

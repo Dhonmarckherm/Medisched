@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { dbRateLimit } from "@/lib/rateLimitDb";
 
 function getAdminClient() {
   return createClient(
@@ -31,6 +32,16 @@ export async function GET() {
 // POST - Validate license key and activate system
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit license attempts (5 per 5 minutes per IP)
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = await dbRateLimit.licenseAttempt(ip);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: `Too many license attempts. Please try again in ${rateLimitResult.retryAfter} seconds.` },
+        { status: 429, headers: { "Retry-After": String(rateLimitResult.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const { key } = body;
 
