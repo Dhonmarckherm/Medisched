@@ -206,39 +206,75 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    // Ensure Supabase Auth user exists and email is confirmed
+    // (handles users who signed up before email confirmation fix)
+    if (user.auth_id) {
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(user.auth_id, {
+          email_confirm: true,
+        });
+      } catch (confirmErr) {
+        console.error("Failed to pre-confirm auth user:", confirmErr);
+      }
+    }
+
+    // Attempt sign in
+    let { data: signInData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    // If sign in fails, try to recover and retry
     if (authError) {
-      // If Supabase Auth fails because email is not confirmed, confirm it and retry
-      // (handles users who verified before the fix was applied)
-      if (authError.message && (
-        authError.message.includes("Email not confirmed") ||
-        authError.message.includes("email_not_confirmed") ||
-        authError.message.includes("not confirmed")
-      )) {
+      console.error("First signInWithPassword attempt failed:", authError.message);
+
+      // Try: auth user might not exist — create one via admin
+      if (!user.auth_id || authError.message.includes("Invalid login credentials")) {
         try {
-          if (user.auth_id) {
-            await supabaseAdmin.auth.admin.updateUserById(user.auth_id, {
+          // Check if auth user exists by listing users
+          const { data: adminUser } = user.auth_id
+            ? await supabaseAdmin.auth.admin.getUserById(user.auth_id)
+            : { data: null };
+
+          if (!adminUser?.user) {
+            // Auth user doesn't exist — we need to create via signUp
+            const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+              email,
+              password,
               email_confirm: true,
             });
+            if (signUpError) {
+              console.error("Admin createUser failed:", signUpError.message);
+            } else if (signUpData.user) {
+              // Update our users table with the new auth_id
+              await supabaseAdmin
+                .from("users")
+                .update({ auth_id: signUpData.user.id })
+                .eq("id", user.id);
+              user.auth_id = signUpData.user.id;
+            }
           }
-          // Retry sign in after confirming
-          const { error: retryError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (retryError) {
-            return NextResponse.json({ error: "Authentication failed: " + retryError.message }, { status: 401 });
+
+          // Retry sign in
+          const retry = await supabase.auth.signInWithPassword({ email, password });
+          if (retry.error) {
+            console.error("Retry signInWithPassword failed:", retry.error.message);
+            return NextResponse.json(
+              { error: "Authentication failed: " + retry.error.message },
+              { status: 401 }
+            );
           }
-        } catch (confirmErr) {
-          console.error("Failed to confirm auth user during login:", confirmErr);
+          signInData = retry.data;
+          authError = null;
+        } catch (recoverErr) {
+          console.error("Login recovery failed:", recoverErr);
           return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
         }
       } else {
-        return NextResponse.json({ error: "Authentication failed: " + authError.message }, { status: 401 });
+        return NextResponse.json(
+          { error: "Authentication failed: " + authError.message },
+          { status: 401 }
+        );
       }
     }
 
