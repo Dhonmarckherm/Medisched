@@ -66,6 +66,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Also confirm the user in Supabase Auth (so signInWithPassword works)
+    if (user.auth_id) {
+      try {
+        await supabase.auth.admin.updateUserById(user.auth_id, {
+          email_confirm: true,
+        });
+      } catch (authErr) {
+        console.error("Failed to confirm Supabase Auth user:", authErr);
+        // Don't fail the whole request — user is active in our DB
+      }
+    }
+
     return NextResponse.json(
       { message: "Account verified successfully", verified: true },
       { status: 200 }

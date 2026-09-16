@@ -212,7 +212,34 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      return NextResponse.json({ error: "Authentication failed: " + authError.message }, { status: 401 });
+      // If Supabase Auth fails because email is not confirmed, confirm it and retry
+      // (handles users who verified before the fix was applied)
+      if (authError.message && (
+        authError.message.includes("Email not confirmed") ||
+        authError.message.includes("email_not_confirmed") ||
+        authError.message.includes("not confirmed")
+      )) {
+        try {
+          if (user.auth_id) {
+            await supabaseAdmin.auth.admin.updateUserById(user.auth_id, {
+              email_confirm: true,
+            });
+          }
+          // Retry sign in after confirming
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (retryError) {
+            return NextResponse.json({ error: "Authentication failed: " + retryError.message }, { status: 401 });
+          }
+        } catch (confirmErr) {
+          console.error("Failed to confirm auth user during login:", confirmErr);
+          return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+        }
+      } else {
+        return NextResponse.json({ error: "Authentication failed: " + authError.message }, { status: 401 });
+      }
     }
 
     return response;
