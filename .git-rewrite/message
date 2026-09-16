@@ -1,1 +1,0 @@
-Fix: add /forgot-password to public routes in middleware - was redirecting to login

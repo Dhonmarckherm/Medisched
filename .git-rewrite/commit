@@ -1,6 +1,0 @@
-tree 449552fa097265a6170d8d962659d086526051e4
-parent 3511284c4ad467c5b3b1861e70e601921c563ace
-author Dhonmarckherm <dhonmarck2004_db_user@outlook.com> 1789046833 +0800
-committer Dhonmarckherm <dhonmarck2004_db_user@outlook.com> 1789046833 +0800
-
-Fix: add /forgot-password to public routes in middleware - was redirecting to login
