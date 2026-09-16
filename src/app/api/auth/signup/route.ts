@@ -149,13 +149,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send welcome email with verification link (non-blocking)
-    sendWelcomeEmail(email, first_name, verifyUrl).catch((err) => {
-      console.error("Email send failed:", err);
-    });
+    // Send welcome email with verification link (awaited to ensure delivery on Vercel)
+    let emailSent = false;
+    try {
+      emailSent = await sendWelcomeEmail(email, first_name, verifyUrl);
+      if (!emailSent) {
+        console.error("Welcome email returned false for:", email);
+      }
+    } catch (emailErr) {
+      console.error("Welcome email threw error for:", email, emailErr);
+    }
 
     return NextResponse.json(
-      { message: "Account created. Please check your email to verify your account.", user: dbUser[0] },
+      { 
+        message: "Account created. Please check your email to verify your account.", 
+        user: dbUser[0],
+        emailSent,
+      },
       { status: 201 }
     );
   } catch (error) {

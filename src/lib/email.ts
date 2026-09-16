@@ -253,13 +253,15 @@ Thank you for using the ISPSC Clinic system. ${isApproved ? "We hope you are doi
 export async function sendWelcomeEmail(to: string, name: string, verifyUrl?: string) {
   try {
     const html = welcomeEmail(name, verifyUrl);
-    await transporter.sendMail({
+    console.log(`Sending welcome email to ${to} via ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}...`);
+    const info = await transporter.sendMail({
       from: FROM,
       to,
       subject: verifyUrl ? "Verify Your Account — MEDISCHED CERT" : "Welcome to MEDISCHED CERT",
       html,
       text: htmlToText(html),
     });
+    console.log(`Welcome email sent to ${to}, messageId: ${info.messageId}`);
     return true;
   } catch (err) {
     console.error("Failed to send welcome email:", err);
@@ -336,13 +338,15 @@ ${resetUrl}
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
   try {
     const html = passwordResetEmail(name, resetUrl);
-    await transporter.sendMail({
+    console.log(`Sending password reset email to ${to} via ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}...`);
+    const info = await transporter.sendMail({
       from: FROM,
       to,
       subject: "Reset Your Password — ISPSC Clinic",
       html,
       text: htmlToText(html),
     });
+    console.log(`Password reset email sent to ${to}, messageId: ${info.messageId}`);
     return true;
   } catch (err) {
     console.error("Failed to send password reset email:", err);

@@ -23,12 +23,15 @@ npm-debug.log*
 # Local env files
 .env*.local
 .env
+.env.*
 
 # Vercel
 .vercel
 
+# Temp scripts
+.vercel-tmp/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-.git-rewrite/
 .git-rewrite/
