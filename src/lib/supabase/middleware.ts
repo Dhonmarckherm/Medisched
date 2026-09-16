@@ -16,6 +16,9 @@ function getAdminClient() {
   return cachedAdminClient;
 }
 
+// In-memory cache for license status (avoids DB query on every request)
+let licenseCache = { activated: false, expiresAt: 0 };
+
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -28,27 +31,45 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // License gate check — block everything until system is activated
+  // Skip middleware for Next.js prefetch requests (RSC prefetch)
+  // These are background fetches that shouldn't trigger auth redirects
+  const prefetchHeader = request.headers.get("next-router-prefetch") || request.headers.get("purpose") === "prefetch";
+  if (prefetchHeader) {
+    return NextResponse.next({ request });
+  }
+
+  // License gate check — cached to avoid DB query on every request
   const licensePublicRoutes = ["/license", "/api/license"];
   const isLicenseRoute = licensePublicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   if (!isLicenseRoute) {
-    try {
-      const supabaseAdmin = getAdminClient();
-      const { data: licenseData } = await supabaseAdmin
-        .from("system_settings")
-        .select("setting_value")
-        .eq("setting_key", "license_activated")
-        .single();
+    const now = Date.now();
+    let isActivated = false;
 
-      const licenseValue = (licenseData as { setting_value: string } | null)?.setting_value;
-      if (!licenseValue || licenseValue !== "true") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/license";
-        return NextResponse.redirect(url);
+    if (licenseCache.expiresAt > now) {
+      // Use cached value
+      isActivated = licenseCache.activated;
+    } else {
+      // Query DB and cache the result for 5 minutes
+      try {
+        const supabaseAdmin = getAdminClient();
+        const { data: licenseData } = await supabaseAdmin
+          .from("system_settings")
+          .select("setting_value")
+          .eq("setting_key", "license_activated")
+          .single();
+
+        const licenseValue = (licenseData as { setting_value: string } | null)?.setting_value;
+        isActivated = licenseValue === "true";
+        licenseCache = { activated: isActivated, expiresAt: now + 5 * 60 * 1000 };
+      } catch {
+        // If query fails, assume not activated
+        isActivated = false;
+        licenseCache = { activated: false, expiresAt: now + 30 * 1000 }; // Retry sooner on failure
       }
-    } catch {
-      // If table doesn't exist or query fails, redirect to license page
+    }
+
+    if (!isActivated) {
       const url = request.nextUrl.clone();
       url.pathname = "/license";
       return NextResponse.redirect(url);
