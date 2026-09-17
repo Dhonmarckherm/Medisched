@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Build direct link to our reset page
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
-    const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://medisched-cert.vercel.app";
+    const resetUrl = `${siteUrl}/reset-password?token=${resetToken}`;
 
     // Send email via Gmail SMTP (ISPSC CLINIC template)
     const sent = await sendPasswordResetEmail(email, dbUser.first_name, resetUrl);

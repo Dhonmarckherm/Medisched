@@ -45,21 +45,18 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      const { data: existing } = await supabase.from("users").select("id").eq("email", formData.email).neq("id", user.id).limit(1);
-      if (existing && existing.length > 0) {
-        addToast("error", "Email is already taken by another user");
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        addToast("error", data.error || "Failed to update profile");
         setSaving(false);
         return;
       }
-
-      const { error: updateError } = await supabase.from("users").update({
-        first_name: formData.first_name, last_name: formData.last_name,
-        middle_name: formData.middle_name || null, id_number: formData.id_number,
-        course: formData.course || null, year_level: formData.year_level || null,
-        contact_number: formData.contact_number || null, email: formData.email,
-      }).eq("id", user.id);
-
-      if (updateError) { addToast("error", "Failed to update profile"); setSaving(false); return; }
 
       addToast("success", "Profile updated successfully!");
       setUser({ ...user, ...formData });
