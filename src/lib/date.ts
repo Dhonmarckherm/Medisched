@@ -22,3 +22,14 @@ export function getISODateManila(date: Date): string {
     day: "2-digit",
   }).format(date);
 }
+
+/**
+ * True when a schedule's `available_to` date (a DATE stored as YYYY-MM-DD) is
+ * strictly before today in Asia/Manila — i.e. the clinic window has ended even
+ * though its `status` flag is still the manually-set "active".
+ */
+export function isScheduleWindowPassed(availableTo: string | null | undefined): boolean {
+  if (!availableTo) return false;
+  const dateOnly = availableTo.slice(0, 10); // normalize to YYYY-MM-DD
+  return dateOnly < getTodayISOManila();
+}

@@ -7,6 +7,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     Pending: "bg-amber-50 text-amber-700 border border-amber-200",
     Approved: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     Rejected: "bg-red-50 text-red-700 border border-red-200",
+    Expired: "bg-rose-50 text-rose-600 border border-rose-200",
     active: "bg-emerald-50 text-emerald-700 border border-emerald-200",
     inactive: "bg-gray-50 text-gray-500 border border-gray-200",
   };
@@ -15,6 +16,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     Pending: "bg-amber-500",
     Approved: "bg-emerald-500",
     Rejected: "bg-red-500",
+    Expired: "bg-rose-500",
     active: "bg-emerald-500",
     inactive: "bg-gray-400",
   };

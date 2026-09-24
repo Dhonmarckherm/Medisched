@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getDashboardStats, getRecentActivity } from "@/lib/queries";
+import { isScheduleWindowPassed } from "@/lib/date";
 import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
 import StatusBadge from "@/components/StatusBadge";
@@ -304,7 +305,7 @@ export default async function DashboardPage() {
               )}
               <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                 <span className="text-[13px] text-gray-400">Status</span>
-                <StatusBadge status={accommodation.data.status} />
+                <StatusBadge status={accommodation.data.status === "active" && isScheduleWindowPassed(accommodation.data.available_to) ? "Expired" : accommodation.data.status} />
               </div>
             </div>
           </div>

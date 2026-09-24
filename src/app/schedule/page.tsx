@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
 import { CalendarIcon, ClockIcon } from "@/components/Icons";
+import { isScheduleWindowPassed } from "@/lib/date";
 
 function formatTime(time: string) {
   const [h, m] = time.split(":").map(Number);
@@ -120,7 +121,7 @@ export default function SchedulePage() {
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-400 m-0">Status</p>
-                  <StatusBadge status={accommodation.status} />
+                  <StatusBadge status={accommodation.status === "active" && isScheduleWindowPassed(accommodation.available_to) ? "Expired" : accommodation.status} />
                 </div>
               </div>
             </div>
