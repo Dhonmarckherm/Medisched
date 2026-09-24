@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
+import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon, AlertCircleIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
 import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
 import { validatePassword } from "@/lib/password";
@@ -204,6 +204,10 @@ export default function SignupPage() {
                   className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="you@email.com" />
               </div>
               {errors.email && <p className="text-red-500 text-[12px] mt-1">{errors.email}</p>}
+              <p className="text-[12px] text-amber-700 mt-2 flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 leading-relaxed">
+                <AlertCircleIcon size={14} className="flex-shrink-0 mt-0.5" />
+                <span>Use your <strong>real, active email (e.g. Gmail)</strong>. Your verification link and all appointment/certificate notifications will be sent there.</span>
+              </p>
             </div>
 
             <div>
