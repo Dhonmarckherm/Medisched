@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import { AlertCircleIcon } from "@/components/Icons";
+import { getTodayISOManila } from "@/lib/date";
 
 export default function NewCertificatePage() {
   const [user, setUser] = useState<any>(null);
@@ -49,6 +50,7 @@ export default function NewCertificatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // guard against double-submit
     setError("");
     // Check profile completion
     if (!user.id_number || !user.course || !user.year_level) {
@@ -57,7 +59,7 @@ export default function NewCertificatePage() {
     }
     setLoading(true);
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayISOManila();
     if (formData.date_needed < today) {
       setError("Date needed cannot be in the past");
       setLoading(false);
@@ -71,25 +73,27 @@ export default function NewCertificatePage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         setError(data.error || "Failed to create certificate request");
         setLoading(false);
         return;
       }
 
       setSuccess("Certificate request submitted successfully!");
+      // Keep the button disabled until the redirect fires to prevent duplicate submissions.
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch {
-      setError("An unexpected error occurred");
-    } finally {
+      setError(!navigator.onLine
+        ? "You appear to be offline. Please reconnect and try again."
+        : "A network error occurred. Please check your connection and try again.");
       setLoading(false);
     }
   };
 
   if (!user) return <div className="min-h-screen flex items-center justify-center" style={{ background: "#f5f8fb" }}>Loading...</div>;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayISOManila();
 
   return (
     <div className="min-h-screen" style={{ background: "#f5f8fb" }}>
@@ -133,7 +137,7 @@ export default function NewCertificatePage() {
             {/* Auto-filled info */}
             <div className="bg-[#f4f8f5] rounded-[10px] p-5 mb-6">
               <h3 className="text-[14px] font-semibold text-[#555] mb-3">Student Information (Auto-filled)</h3>
-              <div className="grid grid-cols-2 gap-3 text-[14px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[14px]">
                 <div><span className="text-[#555]">Name:</span> <span className="font-semibold">{user.last_name}, {user.first_name}{user.middle_name ? ` ${user.middle_name}` : ""}</span></div>
                 <div><span className="text-[#555]">ID Number:</span> <span className="font-semibold">{user.id_number}</span></div>
                 <div><span className="text-[#555]">Course:</span> <span className="font-semibold">{user.course || "N/A"}</span></div>
@@ -145,7 +149,7 @@ export default function NewCertificatePage() {
               <div className="grid grid-cols-1 gap-5">
                 <div className="flex flex-col">
                   <label className="mb-2 font-semibold text-[#333] text-[15px]">Purpose *</label>
-                  <textarea value={formData.purpose} onChange={(e) => setFormData({ ...formData, purpose: e.target.value })} required rows={3}
+                  <textarea value={formData.purpose} onChange={(e) => setFormData({ ...formData, purpose: e.target.value })} required rows={3} maxLength={500}
                     className="py-3.5 px-4 border border-[#dcdcdc] rounded-[10px] text-[15px] outline-none transition focus:border-primary focus:shadow-[0_0_10px_rgba(46,139,87,0.2)] font-[Poppins] resize-none" placeholder="Describe the purpose of the certificate" />
                 </div>
                 <div className="flex flex-col">
@@ -155,8 +159,8 @@ export default function NewCertificatePage() {
                 </div>
                 <div className="flex flex-col">
                   <label className="mb-2 font-semibold text-[#333] text-[15px]">Contact Number</label>
-                  <input type="text" value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                    className="py-3.5 px-4 border border-[#dcdcdc] rounded-[10px] text-[15px] outline-none transition focus:border-primary focus:shadow-[0_0_10px_rgba(46,139,87,0.2)]" />
+                  <input type="text" value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })} maxLength={13} inputMode="tel"
+                    className="py-3.5 px-4 border border-[#dcdcdc] rounded-[10px] text-[15px] outline-none transition focus:border-primary focus:shadow-[0_0_10px_rgba(46,139,87,0.2)]" placeholder="e.g. 09XXXXXXXXX" />
                 </div>
                 <div className="flex flex-col">
                   <label className="mb-2 font-semibold text-[#333] text-[15px]">Email</label>
@@ -165,7 +169,7 @@ export default function NewCertificatePage() {
                 </div>
                 <div className="flex flex-col">
                   <label className="mb-2 font-semibold text-[#333] text-[15px]">Remarks (Optional)</label>
-                  <textarea value={formData.remarks} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} rows={2}
+                  <textarea value={formData.remarks} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} rows={2} maxLength={300}
                     className="py-3.5 px-4 border border-[#dcdcdc] rounded-[10px] text-[15px] outline-none transition focus:border-primary focus:shadow-[0_0_10px_rgba(46,139,87,0.2)] font-[Poppins] resize-none" placeholder="Any additional remarks" />
                 </div>
               </div>

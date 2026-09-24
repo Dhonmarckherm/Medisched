@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendWelcomeEmail, sendStatusNotification } from "@/lib/email";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createNotification } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   try {
+    // Require an authenticated staff (admin/nurse) session — this endpoint can
+    // send email and write in-app notifications, so it must never be public.
+    const supabase = await createClient();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const supabaseAdmin = createServiceClient();
+    const { data: caller } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("auth_id", authUser.id)
+      .limit(1);
+    const callerRole = caller?.[0]?.role;
+    if (callerRole !== "admin" && callerRole !== "nurse") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
     const { type, to, name, status, details, userId } = body;
 

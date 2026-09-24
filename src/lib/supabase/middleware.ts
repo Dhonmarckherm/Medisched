@@ -19,6 +19,24 @@ function getAdminClient() {
 // In-memory cache for license status (avoids DB query on every request)
 let licenseCache = { activated: false, expiresAt: 0 };
 
+// Security headers applied to every served page (public and authenticated)
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-XSS-Protection": "1; mode=block",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.qrserver.com; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.qrserver.com; frame-ancestors 'none';",
+};
+
+function applySecurityHeaders<T extends NextResponse>(response: T): T {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -101,13 +119,13 @@ export async function updateSession(request: NextRequest) {
 
   // Public routes - skip auth check
   const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/test-email") || pathname.startsWith("/api/license") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email") || pathname === "/license";
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/license") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email") || pathname === "/license";
 
   // Notification API requires auth (not public)
   // /api/notifications is protected — handled by the route itself
 
   if (isPublicRoute) {
-    return supabaseResponse;
+    return applySecurityHeaders(supabaseResponse);
   }
 
   // Check authentication (getUser validates JWT via network; getSession is a cookie-only fallback)
@@ -172,15 +190,5 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Add security headers to all responses
-  supabaseResponse.headers.set("X-Frame-Options", "DENY");
-  supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
-  supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  supabaseResponse.headers.set("X-XSS-Protection", "1; mode=block");
-  supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  supabaseResponse.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.qrserver.com; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.qrserver.com; frame-ancestors 'none';"
-  );
-
-  return supabaseResponse;
+  return applySecurityHeaders(supabaseResponse);
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getTodayISOManila } from "@/lib/date";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -14,7 +15,8 @@ export async function GET(request: NextRequest) {
   const isAdminOrNurse = dbUser.role === "admin" || dbUser.role === "nurse";
 
   let query = supabase.from("certificates").select("*, users(email)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500); // guard against unbounded payloads; UI paginates client-side
   if (!isAdminOrNurse) query = query.eq("user_id", dbUser.id);
 
   const { data } = await query;
@@ -39,9 +41,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Purpose and date needed are required" }, { status: 400 });
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayISOManila();
     if (date_needed < today) {
       return NextResponse.json({ error: "Date cannot be in the past" }, { status: 400 });
+    }
+
+    if (purpose.length > 500) {
+      return NextResponse.json({ error: "Purpose must be 500 characters or fewer" }, { status: 400 });
+    }
+    if (remarks && remarks.length > 300) {
+      return NextResponse.json({ error: "Remarks must be 300 characters or fewer" }, { status: 400 });
+    }
+    if (contact_number && !/^(09\d{9}|\+639\d{9})$/.test(contact_number.trim())) {
+      return NextResponse.json({ error: "Contact number must be a valid format (e.g., 09XXXXXXXXX)" }, { status: 400 });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
     }
 
     const { data, error } = await supabase

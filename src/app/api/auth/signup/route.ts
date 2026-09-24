@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { dbRateLimit } from "@/lib/rateLimitDb";
 import { sanitizeEmail, sanitizeIdNumber, sanitizeName, detectSQLInjection } from "@/lib/sanitize";
+import { validatePassword } from "@/lib/password";
 
 // Student ID validation: D##-### to D##-##### (e.g., D23-003, D23-00033)
 const CURRENT_YEAR_SHORT = new Date().getFullYear() % 100;
@@ -57,11 +58,9 @@ export async function POST(request: NextRequest) {
     const email = sanitizeEmail(rawEmail);
     const id_number = sanitizeIdNumber(rawIdNumber);
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
+    const pwError = validatePassword(password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
     }
 
     // Validate student ID format

@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendWelcomeEmail } from "@/lib/email";
 import bcrypt from "bcryptjs";
+import { validatePassword } from "@/lib/password";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServiceClient();
-    
-    // Get current user
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    // Read the caller's session from request cookies (request-scoped client),
+    // not from the service client which has no session context.
+    const supabaseAuth = await createClient();
+    const { data: { user: authUser } } = await supabaseAuth.auth.getUser();
     if (!authUser) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+
+    const supabase = createServiceClient();
 
     // Check if current user is super admin
     const { data: currentUser } = await supabase
@@ -37,8 +41,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid role. Only admin or nurse allowed." }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    const pwError = validatePassword(password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
     }
 
     // Check if email already exists

@@ -7,6 +7,7 @@ import StatusBadge from "@/components/StatusBadge";
 import { SearchBar } from "@/components/SearchBar";
 import { Pagination } from "@/components/Pagination";
 import { useToast } from "@/components/Toast";
+import { validatePassword } from "@/lib/password";
 import { UsersIcon, ShieldIcon, UserXIcon, PlusIcon, LockIcon, MailIcon, UserIcon, XIcon, TrashIcon } from "@/components/Icons";
 import { logActivity } from "@/lib/activityLog";
 
@@ -312,8 +313,9 @@ function CreateStaffModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       addToast("error", "Please fill in all required fields");
       return;
     }
-    if (formData.password.length < 6) {
-      addToast("error", "Password must be at least 6 characters");
+    const pwError = validatePassword(formData.password);
+    if (pwError) {
+      addToast("error", pwError);
       return;
     }
 
@@ -389,7 +391,7 @@ function CreateStaffModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             <div className="flex items-center border border-slate-200 rounded-lg px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
               <LockIcon className="text-gray-400 mr-2" size={16} />
               <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" required minLength={6} />
+                className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" required minLength={8} />
             </div>
           </div>
 

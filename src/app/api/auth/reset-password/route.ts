@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import bcrypt from "bcryptjs";
+import { validatePassword } from "@/lib/password";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +11,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Token and new password are required" }, { status: 400 });
     }
 
-    if (new_password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    const pwError = validatePassword(new_password);
+    if (pwError) {
+      return NextResponse.json({ error: pwError }, { status: 400 });
     }
 
     const serviceClient = createServiceClient();

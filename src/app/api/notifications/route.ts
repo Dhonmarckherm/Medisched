@@ -34,14 +34,15 @@ export async function GET() {
       query = query.eq("user_id", userId);
     }
 
-    const { data: notifications } = await query;
-
-    // Count unread
-    const { count: unreadCount } = await supabaseAdmin
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("is_read", false)
-      .eq("user_id", userId);
+    // Run the list and unread-count queries concurrently
+    const [{ data: notifications }, { count: unreadCount }] = await Promise.all([
+      query,
+      supabaseAdmin
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("is_read", false)
+        .eq("user_id", userId),
+    ]);
 
     return NextResponse.json({
       notifications: notifications || [],
@@ -65,26 +66,29 @@ export async function PATCH(request: NextRequest) {
 
     const supabaseAdmin = createServiceClient();
 
+    // Resolve the caller's DB id so every update is scoped to their own rows
+    const { data: dbUser } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("auth_id", user.id)
+      .limit(1);
+
+    if (!dbUser?.[0]) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const ownerId = dbUser[0].id;
+
     if (ids && ids.length > 0) {
       await supabaseAdmin
         .from("notifications")
         .update({ is_read: true, read_at: new Date().toISOString() })
-        .in("id", ids);
+        .in("id", ids)
+        .eq("user_id", ownerId); // ownership guard — never touch other users' notifications
     } else {
       // Mark all as read for this user
-      const { data: dbUser } = await supabaseAdmin
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .limit(1);
-
-      if (dbUser?.[0]) {
-        await supabaseAdmin
-          .from("notifications")
-          .update({ is_read: true, read_at: new Date().toISOString() })
-          .eq("user_id", dbUser[0].id)
-          .eq("is_read", false);
-      }
+      await supabaseAdmin
+        .from("notifications")
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq("user_id", ownerId)
+        .eq("is_read", false);
     }
 
     return NextResponse.json({ success: true });

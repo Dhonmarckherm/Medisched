@@ -28,7 +28,7 @@ export async function DELETE(request: NextRequest) {
       .limit(1);
 
     const dbUser = users?.[0];
-    if (!dbUser || !["admin", "clinic_nurse"].includes(dbUser.role)) {
+    if (!dbUser || !["admin", "nurse"].includes(dbUser.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

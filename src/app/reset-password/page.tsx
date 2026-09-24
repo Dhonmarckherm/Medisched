@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon, ArrowLeftIcon, CheckCircleIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
+import { validatePassword } from "@/lib/password";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -29,7 +30,8 @@ export default function ResetPasswordPage() {
     setError(""); setSuccess(""); setLoading(true);
 
     if (password !== confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+    const pwError = validatePassword(password);
+    if (pwError) { setError(pwError); setLoading(false); return; }
     if (!token) { setError("Invalid reset link. Please request a new one."); setLoading(false); return; }
 
     try {
@@ -147,8 +149,8 @@ export default function ResetPasswordPage() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">New Password</label>
               <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
+                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8}
+                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
                   {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                 </button>
@@ -158,7 +160,7 @@ export default function ResetPasswordPage() {
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm New Password</label>
               <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
-                <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6}
+                <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8}
                   className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter password" />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
                   {showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}

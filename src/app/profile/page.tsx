@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
+import { validatePassword } from "@/lib/password";
 import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
 
 export default function ProfilePage() {
@@ -76,8 +77,9 @@ export default function ProfilePage() {
       addToast("error", "New passwords do not match");
       return;
     }
-    if (passwordForm.new_pw.length < 6) {
-      addToast("error", "New password must be at least 6 characters");
+    const pwError = validatePassword(passwordForm.new_pw);
+    if (pwError) {
+      addToast("error", pwError);
       return;
     }
     setChangingPw(true);
@@ -244,8 +246,8 @@ export default function ProfilePage() {
                     <LockIcon size={14} /> New Password
                   </label>
                   <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-                    <input type={showNewPw ? "text" : "password"} value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={6}
-                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
+                    <input type={showNewPw ? "text" : "password"} value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={8}
+                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" />
                     <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showNewPw ? "Hide password" : "Show password"}>
                       {showNewPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
                     </button>
@@ -256,7 +258,7 @@ export default function ProfilePage() {
                     <LockIcon size={14} /> Confirm New Password
                   </label>
                   <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-                    <input type={showConfirmPw ? "text" : "password"} value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} required minLength={6}
+                    <input type={showConfirmPw ? "text" : "password"} value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} required minLength={8}
                       className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter new password" />
                     <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showConfirmPw ? "Hide password" : "Show password"}>
                       {showConfirmPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
