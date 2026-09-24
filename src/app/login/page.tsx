@@ -66,8 +66,11 @@ function LoginForm() {
 
       addToast("success", "Login successful! Redirecting...");
 
-      if (data.user.role === "admin" || data.user.role === "nurse") {
-        setTimeout(() => router.push("/dashboard"), 800);
+      // Existing accounts whose password predates the stronger policy are sent
+      // to their profile with a prompt to update it before continuing.
+      if (data.passwordBelowPolicy) {
+        addToast("warning", "Your password doesn't meet our new security requirements. Please update it.");
+        setTimeout(() => router.push("/profile?update-password=1"), 800);
       } else {
         setTimeout(() => router.push("/dashboard"), 800);
       }

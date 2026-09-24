@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
+import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
 import { validatePassword } from "@/lib/password";
-import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
+import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon, AlertCircleIcon } from "@/components/Icons";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [requirePwUpdate, setRequirePwUpdate] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -43,6 +45,19 @@ export default function ProfilePage() {
     };
     fetchUser();
   }, []);
+
+  // Legacy-password prompt: login redirects weak-password accounts here with
+  // ?update-password=1. Detect it and bring the change-password card into view.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("update-password") === "1") setRequirePwUpdate(true);
+  }, []);
+
+  useEffect(() => {
+    if (requirePwUpdate && !loading) {
+      document.getElementById("change-password")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [requirePwUpdate, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,8 +239,19 @@ export default function ProfilePage() {
         </div>
 
         {/* Change Password */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mt-6">
+        <div id="change-password" className={`bg-white rounded-xl border p-6 mt-6 scroll-mt-[110px] ${requirePwUpdate ? "border-amber-300 ring-2 ring-amber-200" : "border-gray-100"}`}>
           <h2 className="text-[16px] font-semibold text-[#1a1a2e] mb-6">Change Password</h2>
+          {requirePwUpdate && (
+            <div className="mb-5 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircleIcon size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[13px] font-semibold text-amber-800 m-0">Password update required</p>
+                <p className="text-[12px] text-amber-700 m-0 mt-1 leading-relaxed">
+                  Your current password doesn&apos;t meet our new security requirements (minimum 8 characters with a number and a symbol). Please choose a stronger password to keep your health records safe.
+                </p>
+              </div>
+            </div>
+          )}
           <form onSubmit={handlePasswordChange}>
             <div className="space-y-4">
               <div>
@@ -247,11 +273,12 @@ export default function ProfilePage() {
                   </label>
                   <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                     <input type={showNewPw ? "text" : "password"} value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={8}
-                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" />
+                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Letter, number & symbol (!@#$%)" />
                     <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showNewPw ? "Hide password" : "Show password"}>
                       {showNewPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
                     </button>
                   </div>
+                  <PasswordStrengthMeter password={passwordForm.new_pw} />
                 </div>
                 <div>
                   <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">

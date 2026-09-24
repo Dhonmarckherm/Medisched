@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { dbRateLimit } from "@/lib/rateLimitDb";
 import { sanitizeEmail, sanitizeIdNumber, detectSQLInjection } from "@/lib/sanitize";
+import { meetsPasswordPolicy } from "@/lib/password";
 import { logLoginAttempt, isAccountLocked, recordFailedLogin, resetFailedLogins } from "@/lib/loginSecurity";
 
 export async function POST(request: NextRequest) {
@@ -173,10 +174,16 @@ export async function POST(request: NextRequest) {
       status: "success",
     });
 
+    // We have the (just-verified) plaintext password here, so we can tell
+    // whether it still meets the current policy. Existing accounts created
+    // before the stronger rules were introduced get nudged to upgrade.
+    const passwordBelowPolicy = !meetsPasswordPolicy(password);
+
     // Create a fresh server client with cookies to sign in
     const cookieStore = await cookies();
     let response = NextResponse.json({
       message: "Login successful",
+      passwordBelowPolicy,
       user: {
         id: user.id,
         email: user.email,

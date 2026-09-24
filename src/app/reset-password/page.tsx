@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LockIcon, ArrowLeftIcon, CheckCircleIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
+import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
 import { validatePassword } from "@/lib/password";
 
 export default function ResetPasswordPage() {
@@ -150,11 +151,12 @@ export default function ResetPasswordPage() {
               <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8}
-                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" />
+                  className="w-full py-3 border-none outline-none text-[14px] bg-transparent" placeholder="Letter, number & symbol (!@#$%)" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
                   {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                 </button>
               </div>
+              <PasswordStrengthMeter password={password} />
             </div>
             <div>
               <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Confirm New Password</label>

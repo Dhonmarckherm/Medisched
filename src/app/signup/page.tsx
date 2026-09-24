@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MailIcon, LockIcon, UserIcon, IdCardIcon, HospitalIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
 import { useToast } from "@/components/Toast";
+import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
 import { validatePassword } from "@/lib/password";
 
 const COURSES = [
@@ -241,12 +242,13 @@ export default function SignupPage() {
               <div className={`flex items-center border rounded-full px-4 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${errors.password ? 'border-red-300' : 'border-gray-200'}`}>
                 <LockIcon className="text-gray-400 mr-2" size={18} />
                 <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} required minLength={8}
-                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Min 8 chars, 1 letter & 1 number" />
+                  className="w-full py-3 border-none outline-none focus:outline-none focus:ring-0 text-[14px] bg-transparent" placeholder="Letter, number & symbol (!@#$%)" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="bg-transparent border-none cursor-pointer p-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors flex items-center">
                   {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-[12px] mt-1">{errors.password}</p>}
+              <PasswordStrengthMeter password={formData.password} />
             </div>
 
             <div>
