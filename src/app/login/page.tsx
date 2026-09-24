@@ -56,9 +56,12 @@ function LoginForm() {
         if (data.unverified) {
           setUnverifiedEmail(email);
           addToast("warning", "Your account is not verified yet. Check your Gmail or click Resend below.");
+        } else if (data.transient) {
+          // Temporary Vercel↔Supabase connection failure — not a credential issue.
+          addToast("warning", data.error || "Connection issue. Please try again in a moment.");
         } else {
           setUnverifiedEmail("");
-          addToast("error", "Please check your Email, ID Number, and Password");
+          addToast("error", data.error || "Please check your Email, ID Number, and Password");
         }
         setLoading(false);
         return;

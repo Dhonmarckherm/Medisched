@@ -225,18 +225,52 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Attempt sign in
-    let { data: signInData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // A transient network failure between Vercel and Supabase (undici "fetch
+    // failed", AuthRetryableFetchError, socket timeouts — all with no HTTP
+    // status) must NOT be reported as bad credentials. Detect those separately.
+    const isTransientAuthError = (e: unknown): boolean => {
+      const err = e as { status?: number; message?: string; name?: string } | null;
+      if (!err) return false;
+      if (err.status === 0) return true;
+      if (err.name && /AuthRetryableFetchError|NetworkError|TimeoutError/i.test(err.name)) return true;
+      return /fetch failed|failed to fetch|networkerror|socket hang up|timeout|econnreset|etimedout|enotfound|eai_again/i.test(err.message || "");
+    };
 
-    // If sign in fails, try to recover and retry
+    // Attempt sign in, retrying a couple of times on transient network errors
+    // so a brief Vercel↔Supabase hiccup doesn't lock a user out.
+    type AuthErrorShape = { message?: string; status?: number; name?: string } | null;
+    let signInData: unknown = null;
+    let authError: AuthErrorShape = null;
+    const MAX_AUTH_ATTEMPTS = 3;
+    for (let attempt = 1; attempt <= MAX_AUTH_ATTEMPTS; attempt++) {
+      const result = await supabase.auth.signInWithPassword({ email, password });
+      signInData = result.data;
+      authError = (result.error ?? null) as AuthErrorShape;
+      if (!authError) break;
+      if (isTransientAuthError(authError) && attempt < MAX_AUTH_ATTEMPTS) {
+        console.warn(`signInWithPassword transient failure (attempt ${attempt}/${MAX_AUTH_ATTEMPTS}): ${authError.message}`);
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      break;
+    }
+
+    // Persistent transient failure → return a retryable 503 (NOT a 401) so the
+    // client can tell the user it's a temporary connection issue, not wrong creds.
+    if (authError && isTransientAuthError(authError)) {
+      return NextResponse.json(
+        { error: "We couldn't reach the authentication service. Please try again in a moment.", transient: true },
+        { status: 503 }
+      );
+    }
+
+    // Non-transient sign-in error: try to recover if the Supabase Auth user is
+    // missing or the password doesn't match an existing auth record.
     if (authError) {
       console.error("First signInWithPassword attempt failed:", authError.message);
 
       // Try: auth user might not exist — create one via admin
-      if (!user.auth_id || authError.message.includes("Invalid login credentials")) {
+      if (!user.auth_id || (authError.message || "").includes("Invalid login credentials")) {
         try {
           // Check if auth user exists by listing users
           const { data: adminUser } = user.auth_id
@@ -265,6 +299,12 @@ export async function POST(request: NextRequest) {
           // Retry sign in
           const retry = await supabase.auth.signInWithPassword({ email, password });
           if (retry.error) {
+            if (isTransientAuthError(retry.error)) {
+              return NextResponse.json(
+                { error: "We couldn't reach the authentication service. Please try again in a moment.", transient: true },
+                { status: 503 }
+              );
+            }
             console.error("Retry signInWithPassword failed:", retry.error.message);
             return NextResponse.json(
               { error: "Authentication failed: " + retry.error.message },
