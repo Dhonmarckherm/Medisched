@@ -110,10 +110,18 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Check authentication
-  const {
+  // Check authentication (getUser validates JWT via network; getSession is a cookie-only fallback)
+  let {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) {
+    // Fallback: check locally-stored session cookie (handles transient network issues with getUser)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      user = session.user;
+    }
+  }
 
   if (!user) {
     const url = request.nextUrl.clone();
@@ -135,6 +143,7 @@ export async function updateSession(request: NextRequest) {
   if (!dbUser) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("error", "Account not found");
     return NextResponse.redirect(url);
   }
 

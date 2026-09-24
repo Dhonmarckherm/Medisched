@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import CertificatesListClient from "@/components/CertificatesListClient";
 
 export default async function CertificatesListPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect("/login");
 
   const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", user.id).limit(1);

@@ -62,6 +62,7 @@ export default function ManageCertificatesPage() {
             to: email,
             name: `${cert.firstname} ${cert.lastname}`,
             status: action,
+            userId: cert.user_id,
             details: { requestType: "certificate", date: cert.date_needed, purpose: cert.purpose },
           }),
         });

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Navbar from "@/components/Navbar";
 import StatusBadge from "@/components/StatusBadge";
 import { useToast } from "@/components/Toast";
-import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon } from "@/components/Icons";
+import { UserIcon, MailIcon, IdCardIcon, CalendarIcon, BookIcon, PhoneIcon, LockIcon, EyeIcon, EyeOffIcon } from "@/components/Icons";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -17,6 +17,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: "", new_pw: "", confirm: "" });
   const [changingPw, setChangingPw] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const supabase = createClient();
   const { addToast } = useToast();
 
@@ -227,23 +230,38 @@ export default function ProfilePage() {
                 <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
                   <LockIcon size={14} /> Current Password
                 </label>
-                <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} required
-                  className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Enter current password" />
+                <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                  <input type={showCurrentPw ? "text" : "password"} value={passwordForm.current} onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} required
+                    className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Enter current password" />
+                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showCurrentPw ? "Hide password" : "Show password"}>
+                    {showCurrentPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
                     <LockIcon size={14} /> New Password
                   </label>
-                  <input type="password" value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={6}
-                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Min 6 characters" />
+                  <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                    <input type={showNewPw ? "text" : "password"} value={passwordForm.new_pw} onChange={(e) => setPasswordForm({ ...passwordForm, new_pw: e.target.value })} required minLength={6}
+                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Min 6 characters" />
+                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showNewPw ? "Hide password" : "Show password"}>
+                      {showNewPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 mb-1.5">
                     <LockIcon size={14} /> Confirm New Password
                   </label>
-                  <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} required minLength={6}
-                    className="w-full py-2.5 px-3 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-primary transition" placeholder="Re-enter new password" />
+                  <div className="flex items-center border border-gray-200 rounded-lg px-3 transition-all duration-200 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                    <input type={showConfirmPw ? "text" : "password"} value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} required minLength={6}
+                      className="w-full py-2.5 border-none outline-none text-[14px] bg-transparent" placeholder="Re-enter new password" />
+                    <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="bg-transparent border-none cursor-pointer p-1 ml-1 rounded hover:bg-gray-100 transition-colors flex-shrink-0" title={showConfirmPw ? "Hide password" : "Show password"}>
+                      {showConfirmPw ? <EyeOffIcon size={18} className="text-gray-400" /> : <EyeIcon size={18} className="text-gray-400" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

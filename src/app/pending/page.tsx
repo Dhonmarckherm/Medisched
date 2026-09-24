@@ -50,12 +50,12 @@ export default function PendingListPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const sendEmail = async (email: string, name: string, type: "appointment" | "certificate", status: "Approved" | "Rejected", details?: Record<string, string>) => {
+  const sendEmail = async (email: string, name: string, type: "appointment" | "certificate", status: "Approved" | "Rejected", userId?: string, details?: Record<string, string>) => {
     try {
       await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "status", to: email, name, status, details: { requestType: type, ...details } }),
+        body: JSON.stringify({ type: "status", to: email, name, status, userId, details: { requestType: type, ...details } }),
       });
     } catch { /* email is non-critical, don't block UI */ }
   };
@@ -79,7 +79,7 @@ export default function PendingListPage() {
       const email = item.email || item.users?.email;
       const name = `${item.firstname} ${item.lastname}`;
       const date = type === "appointment" ? item.appointment_date : item.date_needed;
-      await sendEmail(email, name, type, action, { date, purpose: item.purpose });
+      await sendEmail(email, name, type, action, item.user_id, { date, purpose: item.purpose });
     }
 
     if (type === "appointment") {
@@ -169,7 +169,7 @@ export default function PendingListPage() {
       if (email) {
         const name = `${item.firstname} ${item.lastname}`;
         const date = tab === "appointments" ? item.appointment_date : item.date_needed;
-        await sendEmail(email, name, tab === "appointments" ? "appointment" : "certificate", action, { date, purpose: item.purpose });
+        await sendEmail(email, name, tab === "appointments" ? "appointment" : "certificate", action, item.user_id, { date, purpose: item.purpose });
       }
     }
 

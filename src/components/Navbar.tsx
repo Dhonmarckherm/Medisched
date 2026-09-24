@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon, LogoutIcon, DatabaseIcon } from "@/components/Icons";
+import { HospitalIcon, MenuIcon, XIcon, BellIcon, CalendarIcon, CertificateIcon, ClockIcon, UserIcon, ShieldIcon, HomeIcon, DashboardIcon, ChevronDownIcon, SearchIcon, LogoutIcon, DatabaseIcon, CheckCircleIcon, XCircleIcon } from "@/components/Icons";
 
 interface NavbarProps {
   user?: {
@@ -24,18 +24,14 @@ export default function Navbar({ user }: NavbarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [studentNotifs, setStudentNotifs] = useState<any[]>([]);
+  const [studentUnreadCount, setStudentUnreadCount] = useState(0);
   const [logoutModal, setLogoutModal] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
-  const [lastViewed, setLastViewed] = useState<string | null>(null);
-
   useEffect(() => {
     setMounted(true);
-    if (!isAdminOrNurse && user) {
-      const stored = localStorage.getItem(`notif_last_viewed_${user.id}`);
-      if (stored) setLastViewed(stored);
-    }
   }, []);
 
   // Close avatar dropdown on outside click
@@ -49,21 +45,6 @@ export default function Navbar({ user }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [avatarOpen]);
 
-  // Get student user_id - use user.id directly if available, otherwise lookup
-  const [studentId, setStudentId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user || isAdminOrNurse) return;
-    // user.id is the database id from the users table
-    if (user.id) {
-      setStudentId(user.id);
-      return;
-    }
-    // Fallback: lookup by auth_id
-    supabase.from("users").select("id").eq("auth_id", user.id).limit(1)
-      .then(({ data }: { data: { id: string }[] | null }) => { if (data && data.length > 0) setStudentId(data[0].id); });
-  }, [user, isAdminOrNurse, supabase]);
-
   // Fetch notification counts + realtime subscription
   useEffect(() => {
     if (!user) return;
@@ -75,21 +56,19 @@ export default function Navbar({ user }: NavbarProps) {
           supabase.from("certificates").select("id", { count: "exact", head: true }).eq("status", "Pending"),
         ]);
         setPendingCount((appts.count || 0) + (certs.count || 0));
-      } else if (studentId) {
-        // Only show notifications for items updated after the student last viewed them
-        // Falls back to 3 days ago if never viewed
-        const sinceDate = lastViewed || new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-        const [appts, certs] = await Promise.all([
-          supabase.from("appointments").select("id", { count: "exact", head: true })
-            .eq("user_id", studentId)
-            .in("status", ["Approved", "Rejected", "Completed"])
-            .gt("updated_at", sinceDate),
-          supabase.from("certificates").select("id", { count: "exact", head: true })
-            .eq("user_id", studentId)
-            .in("status", ["Approved", "Rejected", "Completed"])
-            .gt("updated_at", sinceDate),
-        ]);
-        setPendingCount((appts.count || 0) + (certs.count || 0));
+      } else {
+        // Students: fetch from notifications table
+        try {
+          const res = await fetch("/api/notifications");
+          if (res.ok) {
+            const data = await res.json();
+            setStudentNotifs(data.notifications || []);
+            setStudentUnreadCount(data.unreadCount || 0);
+            setPendingCount(data.unreadCount || 0);
+          }
+        } catch {
+          // non-critical
+        }
       }
     }
 
@@ -106,7 +85,7 @@ export default function Navbar({ user }: NavbarProps) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, isAdminOrNurse, studentId, supabase, lastViewed]);
+  }, [user, isAdminOrNurse, supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -168,11 +147,16 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="relative">
                 <button
                   onClick={() => {
-                    if (!notifOpen && !isAdminOrNurse && user) {
-                      // Mark notifications as viewed
-                      const now = new Date().toISOString();
-                      localStorage.setItem(`notif_last_viewed_${user.id}`, now);
-                      setLastViewed(now);
+                    if (!notifOpen && !isAdminOrNurse && studentUnreadCount > 0) {
+                      // Mark all student notifications as read
+                      fetch("/api/notifications", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({}),
+                      });
+                      setStudentUnreadCount(0);
+                      setPendingCount(0);
+                      setStudentNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
                     }
                     setNotifOpen(!notifOpen);
                   }}
@@ -207,7 +191,7 @@ export default function Navbar({ user }: NavbarProps) {
                       </div>
                       {/* Body */}
                       <div className="max-h-[300px] overflow-y-auto">
-                        {pendingCount === 0 ? (
+                        {(isAdminOrNurse ? pendingCount === 0 : studentNotifs.length === 0) ? (
                           <div className="py-10 flex flex-col items-center">
                             <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
                               <BellIcon size={20} className="text-gray-300" />
@@ -224,11 +208,18 @@ export default function Navbar({ user }: NavbarProps) {
                             <PendingNotifItem supabase={supabase} table="appointments" label="Pending Appointments" description="Awaiting your decision" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/pending" onClick={() => setNotifOpen(false)} />
                             <PendingNotifItem supabase={supabase} table="certificates" label="Pending Certificates" description="Ready for review" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/pending" onClick={() => setNotifOpen(false)} />
                           </>
+                        ) : studentNotifs.length > 0 ? (
+                          studentNotifs.map((notif) => (
+                            <StudentNotifItem key={notif.id} notif={notif} onClick={() => setNotifOpen(false)} />
+                          ))
                         ) : (
-                          <>
-                            <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
-                            <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
-                          </>
+                          <div className="py-10 flex flex-col items-center">
+                            <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
+                              <BellIcon size={20} className="text-gray-300" />
+                            </div>
+                            <p className="text-[13px] font-medium text-gray-500 m-0">No new updates</p>
+                            <p className="text-[12px] text-gray-300 mt-0.5 m-0">We&apos;ll notify you here</p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -286,10 +277,15 @@ export default function Navbar({ user }: NavbarProps) {
             <div className="relative">
               <button
                 onClick={() => {
-                  if (!notifOpen && !isAdminOrNurse && user) {
-                    const now = new Date().toISOString();
-                    localStorage.setItem(`notif_last_viewed_${user.id}`, now);
-                    setLastViewed(now);
+                  if (!notifOpen && !isAdminOrNurse && studentUnreadCount > 0) {
+                    fetch("/api/notifications", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({}),
+                    });
+                    setStudentUnreadCount(0);
+                    setPendingCount(0);
+                    setStudentNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
                   }
                   setNotifOpen(!notifOpen);
                 }}
@@ -344,7 +340,7 @@ export default function Navbar({ user }: NavbarProps) {
             </div>
             {/* Body */}
             <div className="max-h-[60vh] overflow-y-auto">
-              {pendingCount === 0 ? (
+              {(isAdminOrNurse ? pendingCount === 0 : studentNotifs.length === 0) ? (
                 <div className="py-10 flex flex-col items-center">
                   <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
                     <BellIcon size={20} className="text-gray-300" />
@@ -361,11 +357,18 @@ export default function Navbar({ user }: NavbarProps) {
                   <PendingNotifItem supabase={supabase} table="appointments" label="Pending Appointments" description="Awaiting your decision" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/pending" onClick={() => setNotifOpen(false)} />
                   <PendingNotifItem supabase={supabase} table="certificates" label="Pending Certificates" description="Ready for review" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/pending" onClick={() => setNotifOpen(false)} />
                 </>
+              ) : studentNotifs.length > 0 ? (
+                studentNotifs.map((notif) => (
+                  <StudentNotifItem key={notif.id} notif={notif} onClick={() => setNotifOpen(false)} />
+                ))
               ) : (
-                <>
-                  <PendingNotifItem supabase={supabase} table="appointments" label="Appointment Approved" description="Your appointment was approved" icon={<CalendarIcon size={16} />} iconBg="bg-blue-50" iconColor="text-blue-500" href="/appointments" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
-                  <PendingNotifItem supabase={supabase} table="certificates" label="Certificate Update" description="Your certificate status changed" icon={<CertificateIcon size={16} />} iconBg="bg-purple-50" iconColor="text-purple-500" href="/certificates" onClick={() => setNotifOpen(false)} statusFilter={["Approved", "Rejected", "Completed"]} userId={studentId} sinceDate={lastViewed} />
-                </>
+                <div className="py-10 flex flex-col items-center">
+                  <div className="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center mb-2.5">
+                    <BellIcon size={20} className="text-gray-300" />
+                  </div>
+                  <p className="text-[13px] font-medium text-gray-500 m-0">No new updates</p>
+                  <p className="text-[12px] text-gray-300 mt-0.5 m-0">We&apos;ll notify you here</p>
+                </div>
               )}
             </div>
           </div>
@@ -406,13 +409,15 @@ export default function Navbar({ user }: NavbarProps) {
             <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
               {/* Mobile Notification Summary */}
               {user && pendingCount > 0 && (
-                <div className="mx-1 mb-2 px-3 py-2.5 bg-amber-50 rounded-lg flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <BellIcon size={15} className="text-amber-600" />
+                <div className={`mx-1 mb-2 px-3 py-2.5 rounded-lg flex items-center gap-2.5 ${isAdminOrNurse ? "bg-amber-50" : "bg-primary/5"}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isAdminOrNurse ? "bg-amber-100" : "bg-primary/10"}`}>
+                    <BellIcon size={15} className={isAdminOrNurse ? "text-amber-600" : "text-primary"} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-amber-800 m-0">{pendingCount} pending</p>
-                    <p className="text-[11px] text-amber-500 m-0">Needs your attention</p>
+                    <p className={`text-[12px] font-semibold m-0 ${isAdminOrNurse ? "text-amber-800" : "text-gray-700"}`}>{pendingCount} {isAdminOrNurse ? "pending" : "new"}</p>
+                    <p className={`text-[11px] m-0 ${isAdminOrNurse ? "text-amber-500" : "text-gray-400"}`}>
+                      {isAdminOrNurse ? "Needs your attention" : "Updates on your requests"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -607,6 +612,47 @@ function BottomNavLink({ href, icon, label, pathname }: {
       <span className={isActive ? "text-primary" : "text-gray-400"}>{icon}</span>
       <span className={`text-[10px] font-medium leading-tight ${isActive ? "text-primary" : "text-gray-400"}`}>{label}</span>
       {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
+    </Link>
+  );
+}
+
+/* ── Student notification item ── */
+function StudentNotifItem({ notif, onClick }: { notif: any; onClick: () => void }) {
+  const getIcon = (type: string, isApproved: boolean) => {
+    if (type.includes("appointment")) return <CalendarIcon size={15} className={isApproved ? "text-blue-500" : "text-red-400"} />;
+    if (type.includes("certificate")) return <CertificateIcon size={15} className={isApproved ? "text-purple-500" : "text-red-400"} />;
+    return <BellIcon size={15} className="text-gray-400" />;
+  };
+
+  const isApproved = notif.type?.includes("approved");
+  const isRejected = notif.type?.includes("rejected");
+  const href = notif.link || (notif.type?.includes("certificate") ? "/certificates" : "/appointments");
+
+  const getTimeAgo = (dateStr: string) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  return (
+    <Link href={href} onClick={onClick}
+      className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50/80 no-underline transition-colors ${!notif.is_read ? "bg-primary/[0.02]" : ""}`}
+      style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${isApproved ? "bg-emerald-50" : isRejected ? "bg-red-50" : "bg-gray-50"}`}>
+        {getIcon(notif.type, isApproved || !isRejected)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] font-semibold text-[#111] m-0 leading-tight truncate">{notif.title}</p>
+          {!notif.is_read && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+        </div>
+        <p className="text-[12px] text-gray-400 mt-0.5 m-0 leading-tight">{notif.message}</p>
+        <p className="text-[11px] text-gray-300 mt-1 m-0">{getTimeAgo(notif.created_at)}</p>
+      </div>
     </Link>
   );
 }

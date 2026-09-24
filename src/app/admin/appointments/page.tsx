@@ -62,6 +62,7 @@ export default function ManageAppointmentsPage() {
             to: email,
             name: `${appt.firstname} ${appt.lastname}`,
             status: action,
+            userId: appt.user_id,
             details: { requestType: "appointment", date: appt.appointment_date, purpose: appt.purpose },
           }),
         });

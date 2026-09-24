@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -24,4 +25,15 @@ export async function createClient() {
       },
     }
   );
+}
+
+/**
+ * Robust auth check for server components.
+ * Tries getUser() first (network-validated), falls back to getSession() (cookie-only).
+ */
+export async function getAuthUser(supabase: SupabaseClient): Promise<User | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) return user;
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user ?? null;
 }

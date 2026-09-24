@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getDashboardStats, getRecentActivity } from "@/lib/queries";
 import Navbar from "@/components/Navbar";
 import StatCard from "@/components/StatCard";
@@ -10,7 +10,7 @@ import { CalendarIcon, CertificateIcon, ClockIcon, ArrowRightIcon, UsersIcon, Ch
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) redirect("/login");
 
   const { data: dbUserData } = await supabase.from("users").select("*").eq("auth_id", user.id).limit(1);
