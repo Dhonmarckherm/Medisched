@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const last_name = sanitizeName(rawLast);
     const middle_name = rawMiddle ? sanitizeName(rawMiddle) : "";
     const email = sanitizeEmail(rawEmail);
-    const id_number = sanitizeIdNumber(rawIdNumber);
+    const id_number = sanitizeIdNumber(rawIdNumber).toUpperCase();
 
     const pwError = validatePassword(password);
     if (pwError) {

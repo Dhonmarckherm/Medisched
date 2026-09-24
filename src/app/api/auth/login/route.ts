@@ -87,8 +87,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if id_number matches
-    if (user.id_number !== idNumber) {
+    // Check if id_number matches. Compare case-insensitively and trimmed so a
+    // student whose ID was stored as "d23-003" can still sign in typing "D23-003"
+    // (the ID is conceptually uppercase; don't lock people out over capitalization).
+    if ((user.id_number || "").trim().toUpperCase() !== idNumber.trim().toUpperCase()) {
       const failResult = await recordFailedLogin(user.id);
       await logLoginAttempt({
         userId: user.id,
