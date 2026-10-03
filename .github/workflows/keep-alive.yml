@@ -1,0 +1,46 @@
+name: Keep production database active
+
+# Vercel Hobby only allows one cron run per day. This workflow complements the
+# vercel.json cron by generating real Supabase activity every 6 hours, so the
+# Free-plan project is not paused for inactivity when students are idle
+# (weekends, semester breaks). No manual "resume project" should be needed.
+#
+# The endpoint is read-only and public; it returns only per-table booleans.
+on:
+  schedule:
+    # UTC. Overwrites the default ~5am peak-delay window by spreading runs.
+    - cron: "17 */6 * * *"
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+permissions: {}
+
+jobs:
+  keep-alive:
+    name: Ping /api/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Generate database activity
+        run: |
+          set +e
+          for attempt in 1 2 3; do
+            body=$(mktemp)
+            code=$(curl -sS -o "$body" -w '%{http_code}' \
+              --connect-timeout 20 --max-time 90 \
+              "https://medisched-cert.vercel.app/api/health")
+            echo "attempt ${attempt}: HTTP ${code}"
+            cat "$body"; echo
+            rm -f "$body"
+
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+
+            echo "Retrying in 30s..."
+            sleep 30
+          done
+
+          # A failed ping does not mean the site is broken (it always returns
+          # 200, even when the database is paused). Surface it but do not
+          # mark the run as a hard failure.
+          echo "::warning::medisched-cert /api/health did not return HTTP 200 after 3 attempts"
