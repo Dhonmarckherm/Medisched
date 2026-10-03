@@ -152,7 +152,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // License gate check — cached to avoid DB query on every request
-  const licensePublicRoutes = ["/license", "/api/license", "/maintenance"];
+  const licensePublicRoutes = ["/license", "/api/license", "/maintenance", "/api/health"];
   const isLicenseRoute = licensePublicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   if (!isLicenseRoute) {
@@ -191,7 +191,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Public routes - skip auth check
-  const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password", "/maintenance"];
+  const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password", "/maintenance", "/api/health"];
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/license") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email") || pathname === "/license";
 
   // Notification API requires auth (not public)
