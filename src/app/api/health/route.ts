@@ -6,8 +6,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 // when the clinic is idle (weekends, semester breaks). Invoked by Vercel Cron
 // via vercel.json.
 //
-// Safety: unauthenticated, but performs only four indexed head-counts, accepts
-// no input, and returns zero record data — just per-table reachability flags.
+// Safety: unauthenticated, but performs only indexed head-counts, accepts no
+// input, and returns zero record data — just per-table reachability flags.
+// Because a Hobby cron can only fire once per day, this single hit intentionally
+// touches every core table to generate meaningful daily database activity.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -16,12 +18,21 @@ export async function GET() {
 
   // Tables this system genuinely uses. head+exact count is the cheapest possible
   // round trip; results are discarded, only reachability is reported.
-  const tables = ["system_settings", "users", "accommodations", "appointments"];
+  const tables = [
+    "system_settings",
+    "users",
+    "accommodations",
+    "appointments",
+    "notifications",
+    "activity_logs",
+    "login_logs",
+    "rate_limits",
+  ];
   const db: Record<string, boolean> = Object.fromEntries(tables.map((t) => [t, false]));
 
   try {
     const supabase = createServiceClient();
-    const results = await Promise.all(
+    await Promise.allSettled(
       tables.map((table) =>
         supabase
           .from(table)
@@ -32,7 +43,6 @@ export async function GET() {
           })
       )
     );
-    await Promise.allSettled(results);
   } catch (err) {
     console.warn(
       "[health] database unreachable:",
@@ -41,11 +51,13 @@ export async function GET() {
   }
 
   const reachable = Object.values(db).filter(Boolean).length;
-  const ok = reachable === tables.length;
+  // Core tables define health; optional log/audit tables may legitimately be absent.
+  const coreOk = db["system_settings"] && db["users"] && db["accommodations"] && db["appointments"];
+  const status = coreOk ? "ok" : reachable > 0 ? "degraded" : "unreachable";
 
   return NextResponse.json(
     {
-      status: ok ? "ok" : reachable > 0 ? "degraded" : "unreachable",
+      status,
       service: "medisched-cert",
       db,
       reachable,
