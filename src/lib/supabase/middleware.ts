@@ -16,8 +16,103 @@ function getAdminClient() {
   return cachedAdminClient;
 }
 
-// In-memory cache for license status (avoids DB query on every request)
-let licenseCache = { activated: false, expiresAt: 0 };
+// In-memory cache for license status (avoids DB query on every request).
+// Three states are tracked so a database outage is never mistaken for an
+// unlicensed install: "activated", "not-activated", and "unknown" (unreachable).
+type LicenseState = "activated" | "not-activated" | "unknown";
+
+export type LicenseGateDecision = "allow" | "license-page" | "maintenance-page";
+
+// Single place that maps a license state to what the visitor should see.
+export function decideLicenseGate(state: LicenseState): LicenseGateDecision {
+  if (state === "activated") return "allow";
+  return state === "unknown" ? "maintenance-page" : "license-page";
+}
+
+let licenseCache: {
+  state: LicenseState;
+  expiresAt: number;
+  confirmedActivatedAt: number;
+} = { state: "unknown", expiresAt: 0, confirmedActivatedAt: 0 };
+
+// How long a cached answer is trusted before re-querying the DB.
+const LICENSE_CACHE_MS = 5 * 60 * 1000;
+// After a confirmed activation, how long an unreachable DB is treated as a
+// temporary outage (maintenance) instead of falling back to the license page.
+const ACTIVATED_GRACE_MS = 30 * 60 * 1000;
+// Shorter cache on failure so recovery is detected quickly.
+const FAILURE_CACHE_MS = 30 * 1000;
+
+// Only a genuine connectivity/infrastructure failure may yield "unknown".
+// PostgREST errors such as an absent row or a denied table are conclusive:
+// the system simply is not activated yet.
+function isDbUnreachable(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "PGRST116") return false; // no rows returned
+  if (error.code && /^PGRST\d+$/i.test(error.code)) return false; // query-level error
+  return /fetch failed|failed to fetch|network|socket|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|Could not connect/i.test(
+    error.message || ""
+  );
+}
+
+// Pure decision for an unreachable DB: only a recently confirmed activation may
+// be reported as an outage ("unknown"). A function that never confirmed
+// activation has no evidence of licensing, so it falls back to the license page.
+export function resolveUnreachableState(
+  confirmedActivatedAt: number,
+  now: number
+): LicenseState {
+  return now - confirmedActivatedAt < ACTIVATED_GRACE_MS ? "unknown" : "not-activated";
+}
+
+// Resolves the current license state, caching the result to avoid a DB round-trip
+// on every request. Returns "unknown" only when the DB was recently confirmed
+// activated but is now unreachable — i.e. a real outage, not a licensing problem.
+async function getLicenseState(): Promise<LicenseState> {
+  const now = Date.now();
+
+  if (licenseCache.expiresAt > now) {
+    return licenseCache.state;
+  }
+
+  let settingValue: string | null | undefined;
+  let queryError: { code?: string; message?: string } | null = null;
+
+  try {
+    const supabaseAdmin = getAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("system_settings")
+      .select("setting_value")
+      .eq("setting_key", "license_activated")
+      .maybeSingle();
+
+    settingValue = (data as { setting_value: string } | null)?.setting_value;
+    queryError = error ?? null;
+  } catch (err) {
+    queryError = { message: (err as Error)?.message };
+  }
+
+  if (!queryError && settingValue === "true") {
+    licenseCache = { state: "activated", expiresAt: now + LICENSE_CACHE_MS, confirmedActivatedAt: now };
+    return "activated";
+  }
+
+  // A connectivity failure on a recently-activated install is an outage.
+  if (queryError && isDbUnreachable(queryError)) {
+    const state = resolveUnreachableState(licenseCache.confirmedActivatedAt, now);
+    licenseCache = { ...licenseCache, state, expiresAt: now + FAILURE_CACHE_MS };
+    console.warn(
+      `License check could not reach the database (${queryError.message}); treating as ${
+        state === "unknown" ? "database outage (maintenance)" : "not activated"
+      }`
+    );
+    return state;
+  }
+
+  // Conclusive outcome: row absent, value not "true", or a query-level error.
+  licenseCache = { ...licenseCache, state: "not-activated", expiresAt: now + LICENSE_CACHE_MS };
+  return "not-activated";
+}
 
 // Security headers applied to every served page (public and authenticated)
 const SECURITY_HEADERS: Record<string, string> = {
@@ -57,39 +152,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   // License gate check — cached to avoid DB query on every request
-  const licensePublicRoutes = ["/license", "/api/license"];
+  const licensePublicRoutes = ["/license", "/api/license", "/maintenance"];
   const isLicenseRoute = licensePublicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
 
   if (!isLicenseRoute) {
-    const now = Date.now();
-    let isActivated = false;
+    const decision = decideLicenseGate(await getLicenseState());
 
-    if (licenseCache.expiresAt > now) {
-      // Use cached value
-      isActivated = licenseCache.activated;
-    } else {
-      // Query DB and cache the result for 5 minutes
-      try {
-        const supabaseAdmin = getAdminClient();
-        const { data: licenseData } = await supabaseAdmin
-          .from("system_settings")
-          .select("setting_value")
-          .eq("setting_key", "license_activated")
-          .single();
-
-        const licenseValue = (licenseData as { setting_value: string } | null)?.setting_value;
-        isActivated = licenseValue === "true";
-        licenseCache = { activated: isActivated, expiresAt: now + 5 * 60 * 1000 };
-      } catch {
-        // If query fails, assume not activated
-        isActivated = false;
-        licenseCache = { activated: false, expiresAt: now + 30 * 1000 }; // Retry sooner on failure
-      }
-    }
-
-    if (!isActivated) {
+    if (decision !== "allow") {
       const url = request.nextUrl.clone();
-      url.pathname = "/license";
+      // A DB outage gets an honest maintenance screen — never the pay-to-activate
+      // page, which would falsely tell the clinic they are unlicensed.
+      url.pathname = decision === "maintenance-page" ? "/maintenance" : "/license";
       return NextResponse.redirect(url);
     }
   }
@@ -118,7 +191,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Public routes - skip auth check
-  const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password"];
+  const publicRoutes = ["/", "/login", "/signup", "/reset-password", "/forgot-password", "/maintenance"];
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/api/auth") || pathname.startsWith("/api/verify-email") || pathname.startsWith("/api/resend-verification") || pathname.startsWith("/api/license") || pathname.startsWith("/auth/callback") || pathname.startsWith("/verify-email") || pathname === "/license";
 
   // Notification API requires auth (not public)
