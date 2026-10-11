@@ -1,14 +1,24 @@
 import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// Create a fresh transporter per send. On serverless (Vercel Fluid), a warm
+// instance can reuse a module-scope pooled transport whose TLS socket went stale
+// while the instance was paused (e.g. after traffic stops). That makes sendMail
+// hang silently on the dead socket and never deliver. A new connection per call,
+// explicit timeouts, and close() after use avoids the stale-socket hang.
+function createTransport() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+  });
+}
 
 const FROM = `"${process.env.SMTP_FROM_NAME || "MEDISCHED CERT"}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`;
 
@@ -251,6 +261,7 @@ Thank you for using the ISPSC Clinic system. ${isApproved ? "We hope you are doi
 /* ── Send Functions ── */
 
 export async function sendWelcomeEmail(to: string, name: string, verifyUrl?: string) {
+  const transporter = createTransport();
   try {
     const html = welcomeEmail(name, verifyUrl);
     console.log(`Sending welcome email to ${to} via ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}...`);
@@ -266,6 +277,8 @@ export async function sendWelcomeEmail(to: string, name: string, verifyUrl?: str
   } catch (err) {
     console.error("Failed to send welcome email:", err);
     return false;
+  } finally {
+    transporter.close();
   }
 }
 
@@ -276,6 +289,7 @@ export async function sendStatusNotification(
   status: "Approved" | "Rejected",
   details: { date?: string; purpose?: string } = {}
 ) {
+  const transporter = createTransport();
   try {
     const html = statusEmail(name, type, status, details);
     await transporter.sendMail({
@@ -289,6 +303,8 @@ export async function sendStatusNotification(
   } catch (err) {
     console.error("Failed to send status email:", err);
     return false;
+  } finally {
+    transporter.close();
   }
 }
 
@@ -336,6 +352,7 @@ ${resetUrl}
 }
 
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
+  const transporter = createTransport();
   try {
     const html = passwordResetEmail(name, resetUrl);
     console.log(`Sending password reset email to ${to} via ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}...`);
@@ -351,5 +368,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
   } catch (err) {
     console.error("Failed to send password reset email:", err);
     return false;
+  } finally {
+    transporter.close();
   }
 }
